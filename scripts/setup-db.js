@@ -3,13 +3,14 @@ const { Pool } = require('pg');
 const { poblarCatalogos } = require('./seeders/catalogs');
 const dbModels = require('../models/index');
 const LEGACY_DB_NAME = process.env.LEGACY_DB_NAME || 'becario_newBecarios';
+const NEW_DB_NAME = process.env.DB_NAME || 'becarios_v2';
 
 async function autoSetup() {
   try {
-    console.log('⚠️ ADVERTENCIA: Este script creará/sobreescribirá las tablas en la BD becarios_v2');
+    console.log(`⚠️ ADVERTENCIA: Este script creará/sobreescribirá las tablas en la BD ${NEW_DB_NAME}`);
     console.log('Conectando a bases de datos...');
     await sequelize.authenticate();
-    console.log('✅ Conexión exitosa al clúster PostgreSQL de becarios_v2');
+    console.log(`✅ Conexión exitosa al clúster PostgreSQL de ${NEW_DB_NAME}`);
 
     // 1. FORZAR CREACIÓN DE TABLAS - Ojo: force:true borra las existentes
     console.log('🚧 Modelando esquemas de la Base de Datos V2. Por favor espere...');
@@ -65,7 +66,7 @@ async function autoSetup() {
 
     console.log('🎉 Migración de cartografía completada a la perfección.');
     console.log('----------------------------------------------------');
-    console.log('🚀 BASE DE DATOS `becarios_v2` ESTÁ LISTA PARA RECIBIR LA MIGRACIÓN MASIVA (Sprint 2)');
+    console.log(`🚀 BASE DE DATOS ${NEW_DB_NAME} ESTÁ LISTA PARA RECIBIR LA MIGRACIÓN MASIVA (Sprint 2)`);
 
     process.exit(0);
   } catch (error) {

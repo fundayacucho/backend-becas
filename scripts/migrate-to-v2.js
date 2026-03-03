@@ -10,6 +10,7 @@ const {
   DocumentoBecario
 } = require('../models');
 const LEGACY_DB_NAME = process.env.LEGACY_DB_NAME || 'becario_newBecarios';
+const NEW_DB_NAME = process.env.DB_NAME || 'becarios_v2';
 
 // ConexiÃ³n legacy para lectura
 const legacyPool = new Pool({
@@ -453,7 +454,7 @@ async function runMigration() {
     
     console.log('================================================================');
     console.log('ðŸŽ‰ MIGRACIÃ“N COMPLETA Y EXITOSA.');
-    console.log('Los datos han sido normalizados e insertados en becarios_v2.');
+    console.log(`Los datos han sido normalizados e insertados en ${NEW_DB_NAME}.`);
     console.log('================================================================');
 
   } catch (err) {

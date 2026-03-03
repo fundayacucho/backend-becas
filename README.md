@@ -33,6 +33,9 @@ API Node.js + Express para gestion de becarios con base de datos PostgreSQL y Se
 - `EXT_VEN` (`3`)
 - `EGRESADO`
 
+## Roles
+- El usuario administrador debe tener `id_rol = 4` (codigo `ADMIN` en `cat_roles`).
+
 ## Documentacion de uso API
 Ver:
 - `../docs/api_becarios_unificada.md.resolved`
