@@ -4,6 +4,7 @@ const { poblarCatalogos } = require('./seeders/catalogs');
 const dbModels = require('../models/index');
 const LEGACY_DB_NAME = process.env.LEGACY_DB_NAME || 'becario_newBecarios';
 const NEW_DB_NAME = process.env.DB_NAME || 'becarios_v2';
+const LEGACY_DB_USER = process.env.LEGACY_DB_USER || 'postgres';
 
 async function autoSetup() {
   try {
@@ -25,7 +26,7 @@ async function autoSetup() {
     
     // Conexión específica con el usuario postgres para tener permisos de lectura total
     const legacyPool = new Pool({
-      user: 'postgres',
+      user: LEGACY_DB_USER,
       host: process.env.DB_HOST,
       database: LEGACY_DB_NAME,
       password: process.env.DB_PASSWORD, 
