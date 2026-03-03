@@ -1,164 +1,26 @@
-const Becarios = require('../models/becarios');
-const fs = require('fs');
+﻿const Becarios = require('../models/becarios.legacy');
 const path = require('path');
+const {
+  ensureDirectories,
+  getManagedDirs,
+  moveFileToFolder,
+  cleanupUploadedTempFiles,
+  publicPathToDiskPath
+} = require('../utils/fileManager');
+const { formatBecarioLegacy } = require('./formatters/becarioFormatter');
+const becariosService = require('../services/becariosService');
+const catalogosService = require('../services/catalogosService');
 
+const DIRS = getManagedDirs();
+const ANEXOS_DIR = DIRS.anexos;
+const FOTOS_DIR = DIRS.fotos;
+const CONTANCIA_DIR = DIRS.constancias;
 
-// Configuración de directorios
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
-const ANEXOS_DIR = path.join(UPLOADS_DIR, 'becarios', 'anexos' );
-const FOTOS_DIR = path.join(UPLOADS_DIR, 'becarios',  'fotos');
-const CONTANCIA_DIR = path.join(UPLOADS_DIR, 'becarios', 'constancias');
-
-// Crear directorios si no existen
 const createDirectories = () => {
-  const directories = [UPLOADS_DIR, ANEXOS_DIR, FOTOS_DIR, CONTANCIA_DIR];
-  
-  // En producción, crear también en public_html
-  const productionDirs = [
-    '/home/fundaya/becarios/public_html/uploads',
-    '/home/fundaya/becarios/public_html/uploads/becarios',
-    '/home/fundaya/becarios/public_html/uploads/becarios/anexos',
-    '/home/fundaya/becarios/public_html/uploads/becarios/fotos',
-    '/home/fundaya/becarios/public_html/uploads/becarios/constancias'
-  ];
-  
-  // Crear todos los directorios
-  [...directories, ...productionDirs].forEach(dir => {
-    if (!fs.existsSync(dir)) {
-      console.log('Creando directorio:', dir);
-      fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
-    }
-  });
+  ensureDirectories();
 };
 
-
-
-// Función para mover archivos y devolver ruta relativa
-const moveFileToFolder = (file, folder, cedula, tipo) => {
-  try {
-    const fileExtension = path.extname(file.originalname);
-    const fileName = `${cedula}_${tipo}${fileExtension}`;
-    
-    // Detectar producción - forzar true para tu servidor
-    const isProduction = true; // Siempre producción en tu servidor
-    
-    console.log('=== MOVE FILE DEBUG ===');
-    console.log('NODE_ENV:', process.env.NODE_ENV);
-    console.log('isProduction:', isProduction);
-    
-    let targetPath;
-    let dbPath;
-
-    if (isProduction) {
-      // PRODUCCIÓN - Guardar en public_html CORREGIDO
-      const subfolder = folder === ANEXOS_DIR ? 'anexos' : 
-                       folder === FOTOS_DIR ? 'fotos' : 'constancias';
-      
-      // Ruta CORREGIDA según tu estructura
-      targetPath = `/home/fundaya/becarios/public_html/uploads/becarios/${subfolder}/${fileName}`;
-      dbPath = `/uploads/becarios/${subfolder}/${fileName}`;
-      
-      console.log('📍 Ruta de producción CORREGIDA:', targetPath);
-    } else {
-      // DESARROLLO
-      targetPath = path.join(folder, fileName);
-      const relativePath = `/uploads/${path.relative(UPLOADS_DIR, targetPath)}`;
-      dbPath = relativePath.replace(/\\/g, '/');
-      
-      console.log('📍 Desarrollo:', targetPath);
-    }
-    
-    // Crear directorios
-    const dir = path.dirname(targetPath);
-    console.log('📁 Directorio destino:', dir);
-    
-    if (!fs.existsSync(dir)) {
-      console.log('🛠️ Creando directorio...');
-      fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
-      console.log('✅ Directorio creado');
-    } else {
-      console.log('✅ Directorio ya existe');
-    }
-    
-    // Mover archivo
-    console.log('🔄 Moviendo archivo...');
-    console.log('De:', file.path);
-    console.log('A:', targetPath);
-    
-    fs.renameSync(file.path, targetPath);
-    
-    // Permisos en producción
-    if (isProduction) {
-      fs.chmodSync(targetPath, 0o644);
-      console.log('🔒 Permisos establecidos (644)');
-    }
-    
-    console.log('✅ Archivo movido exitosamente');
-    console.log('📋 Ruta en base de datos:', dbPath);
-    console.log('=== END DEBUG ===');
-    
-    return dbPath;
-    
-  } catch (error) {
-    console.error('❌ Error moviendo archivo:', error);
-    console.error('Detalles del error:', error.message);
-    throw error;
-  }
-};
-
-
-// Función para convertir ruta relativa a URL completa
-const convertToUrl = (filePath) => {
-  if (!filePath) return null;
-  if (filePath.startsWith('http')) return filePath;
-  
-  const BASE_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://becarios.fundayacucho.gob.ve'
-    : 'http://localhost:3001';
-  
-  // Asegurar que la ruta empiece con /
-  let normalizedPath = filePath.replace(/\\/g, '/');
-  if (!normalizedPath.startsWith('/')) {
-    normalizedPath = '/' + normalizedPath;
-  }
-  
-  return `${BASE_URL}${normalizedPath}`;
-};
-
-// Función para preparar respuesta del becario con URLs
-const prepareBecarioResponse = (becario) => {
-  try {
-    if (!becario) {
-      console.error('Error: El objeto becario es undefined');
-      return null;
-    }
-    
-    // Debug: Log the becario object structure
-    console.log('DEBUG - prepareBecarioResponse - becario:', JSON.stringify(becario, null, 2));
-    
-    // Ensure all required fields exist, provide default values if not
-    const response = {
-      ...becario,
-      anexo_cedula: becario.anexo_cedula || null,
-      anexo_constancia: becario.anexo_constancia || null,
-      anexo_residencia: becario.anexo_residencia || null,
-      anexo_foto: becario.anexo_foto || null,
-      constancia_semestre: becario.constancia_semestre || null,
-      // Add the URL fields
-      anexo_cedula_url: convertToUrl(becario.anexo_cedula),
-      anexo_constancia_url: convertToUrl(becario.anexo_constancia),
-      anexo_residencia_url: convertToUrl(becario.anexo_residencia),
-      anexo_foto_url: convertToUrl(becario.anexo_foto),
-      constancia_semestre_url: convertToUrl(becario.constancia_semestre)
-    };
-    
-    return response;
-  } catch (error) {
-    console.error('Error en prepareBecarioResponse:', error);
-    console.error('Becario object that caused the error:', JSON.stringify(becario, null, 2));
-    throw error; // Re-throw the error to be handled by the calling function
-  }
-};
+const prepareBecarioResponse = (becario) => formatBecarioLegacy(becario);
 
 // Control principal de registro de becarios
 const registroBecarios = async (req, res) => {
@@ -355,15 +217,7 @@ const registroBecarios = async (req, res) => {
     });
   } catch (error) {
     // Eliminar archivos subidos si hay error
-    if (req.files) {
-      Object.values(req.files).forEach(fileArray => {
-        fileArray.forEach(file => {
-          if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-          }
-        });
-      });
-    }
+    cleanupUploadedTempFiles(req.files);
     
     console.error('Error en registro de becario:', error);
     res.status(500).json({ 
@@ -622,15 +476,7 @@ const saveBecarioEsteriol = async (req, res) => {
      
    } catch (error) {
      // Eliminar archivos subidos si hay error
-     if (req.files) {
-       Object.values(req.files).forEach(fileArray => {
-         fileArray.forEach(file => {
-           if (fs.existsSync(file.path)) {
-             fs.unlinkSync(file.path);
-           }
-         });
-       });
-     }
+     cleanupUploadedTempFiles(req.files);
      
      console.error('Error en registro de becario:', error);
      res.status(500).json({ 
@@ -641,7 +487,7 @@ const saveBecarioEsteriol = async (req, res) => {
   
 };
 
-// Función para servir archivos (opcional)
+// FunciÃ³n para servir archivos (opcional)
 const servirArchivo = (req, res) => {
   const { tipo, archivo } = req.params;
   let filePath;
@@ -651,7 +497,7 @@ const servirArchivo = (req, res) => {
   } else if (tipo === 'anexo') {
     filePath = path.join(ANEXOS_DIR, archivo);
   } else {
-    return res.status(400).json({ message: 'Tipo de archivo no válido' });
+    return res.status(400).json({ message: 'Tipo de archivo no vÃ¡lido' });
   }
   
   if (fs.existsSync(filePath)) {
@@ -708,18 +554,10 @@ const register_egresado = async (req, res) => {
 
     if (becarioExistente) {
       // Eliminar archivos subidos si el registro falla
-      if (req.files) {
-        Object.values(req.files).forEach(fileArray => {
-          fileArray.forEach(file => {
-            if (fs.existsSync(file.path)) {
-              fs.unlinkSync(file.path);
-            }
-          });
-        });
-      }
+      cleanupUploadedTempFiles(req.files);
       
       return res.status(400).json({
-        message: 'El becario ya está registrado con esta cédula o correo'
+        message: 'El becario ya estÃ¡ registrado con esta cÃ©dula o correo'
       });
     }
 
@@ -730,7 +568,7 @@ const register_egresado = async (req, res) => {
       });
     }
 
-    // Usar los datos recibidos del req.body en lugar de valores vacíos
+    // Usar los datos recibidos del req.body en lugar de valores vacÃ­os
     const becarioData = {
       id_usuario: id_usuario || "",
       nombre_completo: nombre_completo || "",
@@ -773,15 +611,7 @@ const register_egresado = async (req, res) => {
     });
   } catch (error) {
     // Eliminar archivos subidos si hay error
-    if (req.files) {
-      Object.values(req.files).forEach(fileArray => {
-        fileArray.forEach(file => {
-          if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-          }
-        });
-      });
-    }
+    cleanupUploadedTempFiles(req.files);
     
     console.error('Error en registro de becario:', error);
     res.status(500).json({ 
@@ -1024,13 +854,13 @@ const tbl_pais = async (req, res) => {
       const params = new URLSearchParams(queryString);
       const codigo = params.get('codigo') || '';
       if (!codigo) {
-        return res.status(400).json({ message: 'Código es requerido' });
+        return res.status(400).json({ message: 'CÃ³digo es requerido' });
       }
 
       const data = await Becarios.get_carrera(codigo);
       if (!data || data.length === 0) {
         return res.status(404).json({ 
-          message: 'No se encontraron carreras con el código especificado' 
+          message: 'No se encontraron carreras con el cÃ³digo especificado' 
         });
       }
       
@@ -1110,3 +940,5 @@ module.exports = {
   delete_becario_exterior,
   get_egresado
 };
+
+

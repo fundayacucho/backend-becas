@@ -1,6 +1,8 @@
 const { Pool } = require('pg');
+const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
+// MANTENER TEMPORALMENTE (Legacy) - Se apuntará a la vieja base por ahora si no cambias el env
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
@@ -9,4 +11,12 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-module.exports = pool;
+// NUEVO - Instancia Sequelize para becarios_v2
+const sequelize = new Sequelize('becarios_v2', process.env.DB_USER, process.env.DB_PASSWORD, {
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  dialect: 'postgres',
+  logging: process.env.NODE_ENV === 'development' ? console.log : false,
+});
+
+module.exports = { pool, sequelize };

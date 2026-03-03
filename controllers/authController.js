@@ -1,7 +1,7 @@
-const User = require('../models/user');
+﻿const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const Becarios = require('../models/becarios');
+const Becarios = require('../models/becarios.legacy');
 //const nodemailer = require('nodemailer');
 
 
@@ -108,13 +108,13 @@ const login = async (req, res) => {
     // Buscar usuario
     const user = await User.findByEmail(email);
     if (!user) {
-      return res.status(400).json({ message: 'Credenciales inválidas' });
+      return res.status(400).json({ message: 'Credenciales invÃ¡lidas' });
     }
 
-    // Verificar contraseña
+    // Verificar contraseÃ±a
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      return res.status(400).json({ message: 'Credenciales inválidas' });
+      return res.status(400).json({ message: 'Credenciales invÃ¡lidas' });
     }
 
     // Generar token JWT
