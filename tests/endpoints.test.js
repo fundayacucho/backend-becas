@@ -341,6 +341,26 @@ describe('Constancias internacionales module', () => {
     expect(typeof res.body?.html).toBe('string');
     expect(res.body.html).toContain('<!doctype html>');
   });
+
+  test('POST /api/constancias-internacionales/generate format=pdf retorna PDF binario', async () => {
+    const user = await getUserByRoleCodes(['ANALISTA', 'SUPERVISOR', 'ADMIN']);
+    expect(user).toBeTruthy();
+
+    const token = buildToken(user);
+    const res = await request(app)
+      .post('/api/constancias-internacionales/generate?format=pdf&download=1')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        data: {
+          nombre_becario: 'Becario PDF',
+          cedula: '87654321',
+          fecha_emision: '2026-03-03'
+        }
+      });
+
+    expect(res.statusCode).toBe(200);
+    expect(String(res.headers['content-type'] || '')).toContain('application/pdf');
+  });
 });
 
 afterAll(async () => {

@@ -2,6 +2,8 @@
 const { authenticateToken } = require('../middleware/auth');
 const { authorize } = require('../middleware/authorize');
 const {
+  listExtranjeros,
+  getDataFromBecario,
   getPlaceholders,
   getTemplate,
   updateTemplate,
@@ -13,6 +15,8 @@ const router = express.Router();
 
 router.use(authenticateToken, authorize('ANALISTA', 'SUPERVISOR', 'ADMIN'));
 
+router.get('/becarios-extranjeros', listExtranjeros);
+router.get('/becarios-extranjeros/:id', getDataFromBecario);
 router.get('/placeholders', getPlaceholders);
 router.get('/template', getTemplate);
 router.put('/template', updateTemplate);

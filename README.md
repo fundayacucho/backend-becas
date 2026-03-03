@@ -25,7 +25,7 @@ API Node.js + Express para gestion de becarios con base de datos PostgreSQL y Se
   - `GET /api/constancias-internacionales/template`
   - `PUT /api/constancias-internacionales/template`
   - `POST /api/constancias-internacionales/preview`
-  - `POST /api/constancias-internacionales/generate`
+  - `POST /api/constancias-internacionales/generate` (HTML/PDF con `format=pdf`) 
 
 ## Tipos soportados en upsert unificado
 - `VEN_VEN` (`1`)
@@ -48,3 +48,4 @@ Incluye:
 - Seguridad por roles (`403` para usuario no ADMIN en ruta ADMIN).
 - Validacion de nuevos endpoints unificados por tipo.
 - Validacion del modulo de constancias internacionales.
+
