@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
@@ -10,6 +10,7 @@ const becarioRoutes = require('./routes/becarios');
 const egresadoRoutes = require('./routes/becarios');
 const extranjerosRoutes = require('./routes/extranjerosVenezuela');
 const correoRoutes = require('./routes/correo');
+const constanciasInternacionalesRoutes = require('./routes/constanciasInternacionales');
 const { errorHandler } = require('./middleware/errorHandler');
 
 function createApp() {
@@ -45,6 +46,7 @@ function createApp() {
   app.use('/api/egresado', egresadoRoutes);
   app.use('/api/extranjeros', extranjerosRoutes);
   app.use('/api/correo', correoRoutes);
+  app.use('/api/constancias-internacionales', constanciasInternacionalesRoutes);
 
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
@@ -58,3 +60,4 @@ function createApp() {
 }
 
 module.exports = { createApp };
+

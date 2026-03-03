@@ -42,6 +42,20 @@ async function getAnyNonAdminUser() {
   return rows[0] || null;
 }
 
+async function getUserByRoleCodes(roleCodes = []) {
+  const rows = await sequelize.query(
+    `
+      SELECT u.id, u.email, r.codigo AS rol_codigo
+      FROM usuarios u
+      INNER JOIN cat_roles r ON r.id = u.id_rol
+      WHERE r.codigo = ANY($1)
+      LIMIT 1
+    `,
+    { bind: [roleCodes], type: sequelize.QueryTypes.SELECT }
+  );
+  return rows[0] || null;
+}
+
 function buildToken(user) {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -266,6 +280,66 @@ describe('New unified upsert endpoint by type', () => {
 
     expect([200, 201]).toContain(updateRes.statusCode);
     expect(updateRes.body).toHaveProperty('tipo_becario', 'EXT_VEN');
+  });
+});
+
+describe('Constancias internacionales module', () => {
+  test('GET /api/constancias-internacionales/placeholders con token permitido retorna 200', async () => {
+    const user = await getUserByRoleCodes(['ANALISTA', 'SUPERVISOR', 'ADMIN']);
+    expect(user).toBeTruthy();
+
+    const token = buildToken(user);
+    const res = await request(app)
+      .get('/api/constancias-internacionales/placeholders')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.statusCode).toBe(200);
+    expect(Array.isArray(res.body?.placeholders)).toBe(true);
+    expect(res.body.placeholders.length).toBeGreaterThan(0);
+  });
+
+  test('PUT /api/constancias-internacionales/template con token ANALISTA retorna 403', async () => {
+    const analyst = await getUserByRoleCode('ANALISTA');
+    if (!analyst) return;
+
+    const token = buildToken(analyst);
+    const res = await request(app)
+      .put('/api/constancias-internacionales/template')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        template: {
+          nombre: 'Plantilla prueba',
+          encabezado: 'TEST',
+          subtitulo: 'TEST',
+          ciudad_fecha: 'Caracas, {{fecha_emision}}',
+          cuerpo: ['Linea test'],
+          firma: 'Firma test',
+          pie: 'Pie test'
+        }
+      });
+
+    expect(res.statusCode).toBe(403);
+  });
+
+  test('POST /api/constancias-internacionales/preview con token permitido retorna html', async () => {
+    const user = await getUserByRoleCodes(['ANALISTA', 'SUPERVISOR', 'ADMIN']);
+    expect(user).toBeTruthy();
+
+    const token = buildToken(user);
+    const res = await request(app)
+      .post('/api/constancias-internacionales/preview')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        data: {
+          nombre_becario: 'Becario Test',
+          cedula: '12345678',
+          fecha_emision: '2026-03-03'
+        }
+      });
+
+    expect(res.statusCode).toBe(200);
+    expect(typeof res.body?.html).toBe('string');
+    expect(res.body.html).toContain('<!doctype html>');
   });
 });
 

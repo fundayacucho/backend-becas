@@ -1,0 +1,14 @@
+{
+  "nombre": "Plantilla base constancia internacional",
+  "encabezado": "FUNDACION GRAN MARISCAL DE AYACUCHO",
+  "subtitulo": "CONSTANCIA DE BECA INTERNACIONAL",
+  "ciudad_fecha": "Caracas, {{fecha_emision}}",
+  "cuerpo": [
+    "Quien suscribe, {{firmante_nombre}}, en su caracter de {{firmante_cargo}} de la Fundacion Gran Mariscal de Ayacucho, hace constar por medio de la presente que el(la) ciudadano(a) {{nombre_becario}}, titular de la cedula {{cedula}} y pasaporte {{pasaporte}}, de nacionalidad {{nacionalidad}}, es beneficiario(a) activo(a) del programa de becas internacionales.",
+    "El(la) becario(a) cursa {{programa}} en {{institucion}} ({{pais_destino}}), con periodo academico comprendido entre {{fecha_inicio}} y {{fecha_fin}}, para una duracion estimada de {{duracion}}.",
+    "La asignacion academica registrada para el periodo vigente es de {{monto_beca}}. Se emite la presente constancia a solicitud de la parte interesada para los fines legales y administrativos que correspondan.",
+    "Observaciones: {{observaciones}}"
+  ],
+  "firma": "Atentamente,\n\n{{firmante_nombre}}\n{{firmante_cargo}}",
+  "pie": "Numero de constancia: {{numero_constancia}}"
+}

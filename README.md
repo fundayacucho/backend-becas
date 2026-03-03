@@ -1,13 +1,13 @@
-# Backend Becarios Fundayacucho
+﻿# Backend Becarios Fundayacucho
 
-API Node.js + Express para gestión de becarios con base de datos PostgreSQL y Sequelize.
+API Node.js + Express para gestion de becarios con base de datos PostgreSQL y Sequelize.
 
 ## Scripts
 - `npm run dev` inicia en modo desarrollo.
 - `npm start` inicia servidor normal.
-- `npm run test` ejecuta tests de regresión API (Jest + Supertest).
+- `npm run test` ejecuta tests de regresion API (Jest + Supertest).
 - `npm run test:e2e` ejecuta smoke E2E.
-- `npm run db:setup` crea estructura y catálogos en `becarios_v2`.
+- `npm run db:setup` crea estructura y catalogos en `becarios_v2`.
 - `npm run db:migrate` migra datos legacy a V2.
 - `npm run db:import-extranjeros` importa CSV de extranjeros.
 
@@ -20,6 +20,12 @@ API Node.js + Express para gestión de becarios con base de datos PostgreSQL y S
 - Nuevo endpoint unificado:
   - `POST /api/becarios/upsert-por-tipo`
   - `PUT /api/becarios/upsert-por-tipo/:id`
+- Modulo constancias internacionales:
+  - `GET /api/constancias-internacionales/placeholders`
+  - `GET /api/constancias-internacionales/template`
+  - `PUT /api/constancias-internacionales/template`
+  - `POST /api/constancias-internacionales/preview`
+  - `POST /api/constancias-internacionales/generate`
 
 ## Tipos soportados en upsert unificado
 - `VEN_VEN` (`1`)
@@ -27,16 +33,18 @@ API Node.js + Express para gestión de becarios con base de datos PostgreSQL y S
 - `EXT_VEN` (`3`)
 - `EGRESADO`
 
-## Documentación de uso API
+## Documentacion de uso API
 Ver:
 - `../docs/api_becarios_unificada.md.resolved`
+- `../docs/api_constancias_internacionales.md`
 - `DEPLOY_MIGRACION_V2.md`
 
 ## Pruebas
-La suite principal está en:
+La suite principal esta en:
 - `tests/endpoints.test.js`
 
 Incluye:
-- Contrato API de endpoints críticos.
+- Contrato API de endpoints criticos.
 - Seguridad por roles (`403` para usuario no ADMIN en ruta ADMIN).
-- Validación de nuevos endpoints unificados por tipo.
+- Validacion de nuevos endpoints unificados por tipo.
+- Validacion del modulo de constancias internacionales.
