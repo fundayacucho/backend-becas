@@ -14,7 +14,7 @@ const NEW_DB_NAME = process.env.DB_NAME || 'becarios_v2';
 
 // ConexiÃ³n legacy para lectura
 const legacyPool = new Pool({
-  user: 'postgres',
+  user: process.env.LEGACY_DB_USER,
   host: process.env.DB_HOST,
   database: LEGACY_DB_NAME,
   password: process.env.DB_PASSWORD,
