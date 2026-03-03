@@ -52,3 +52,11 @@ Incluye:
 - Validacion de nuevos endpoints unificados por tipo.
 - Validacion del modulo de constancias internacionales.
 
+
+## Variables de entorno para migracion legacy
+- LEGACY_DB_NAME (default: becario_newBecarios)
+- LEGACY_DB_USER (si no se define, usa DB_USER)
+- LEGACY_DB_PASSWORD (si no se define, usa DB_PASSWORD)
+- LEGACY_DB_HOST (si no se define, usa DB_HOST)
+- LEGACY_DB_PORT (si no se define, usa DB_PORT)
+

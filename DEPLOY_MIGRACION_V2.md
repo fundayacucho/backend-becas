@@ -15,6 +15,7 @@ Mantener en `.env`:
 - `LEGACY_DB_NAME=becario_newBecarios`
 - `DB_NAME=becarios_v2` (solo cuando se haga el cutover)
 - `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`
+- `LEGACY_DB_HOST`, `LEGACY_DB_PORT`, `LEGACY_DB_USER`, `LEGACY_DB_PASSWORD` (si la BD legacy usa credenciales distintas)
 - `JWT_SECRET`, `ALLOWED_ORIGINS`, `UPLOAD_BASE_DIR`
 
 ## Procedimiento de Deploy

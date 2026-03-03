@@ -11,14 +11,18 @@ const {
 } = require('../models');
 const LEGACY_DB_NAME = process.env.LEGACY_DB_NAME || 'becario_newBecarios';
 const NEW_DB_NAME = process.env.DB_NAME || 'becarios_v2';
+const LEGACY_DB_USER = process.env.LEGACY_DB_USER || process.env.DB_USER;
+const LEGACY_DB_HOST = process.env.LEGACY_DB_HOST || process.env.DB_HOST;
+const LEGACY_DB_PORT = process.env.LEGACY_DB_PORT || process.env.DB_PORT;
+const LEGACY_DB_PASSWORD = process.env.LEGACY_DB_PASSWORD || process.env.DB_PASSWORD;
 
-// ConexiÃ³n legacy para lectura
+// Conexion legacy para lectura
 const legacyPool = new Pool({
-  user: process.env.LEGACY_DB_USER,
-  host: process.env.DB_HOST,
+  user: LEGACY_DB_USER,
+  host: LEGACY_DB_HOST,
   database: LEGACY_DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  password: LEGACY_DB_PASSWORD,
+  port: LEGACY_DB_PORT,
 });
 
 // Helpers de limpieza de datos
@@ -466,4 +470,5 @@ async function runMigration() {
 }
 
 runMigration();
+
 
