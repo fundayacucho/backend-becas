@@ -51,6 +51,11 @@ function splitNombreCompleto(fullName) {
   };
 }
 
+function pickValue(value, fallback = null) {
+  if (value === undefined || value === null || value === '') return fallback;
+  return value;
+}
+
 async function upsertDocumento(idBecario, idTipoDocumento, rutaArchivo, transaction) {
   if (!rutaArchivo) return;
   const existing = await DocumentoBecario.findOne({
@@ -348,11 +353,11 @@ async function obtenerDetalleEgresado(id) {
     LEFT JOIN tbl_estado e ON e.codigoestado = b.estado
     LEFT JOIN tbl_municipio m ON m.codigomunicipio = b.municipio
     LEFT JOIN tbl_parroquia p ON p.codigoparroquia = b.parroquia
-    WHERE b.id_usuario_legacy = $1 AND s.id_estatus = 2
+    WHERE (CAST(b.id_usuario_legacy AS TEXT) = $1 OR CAST(b.id AS TEXT) = $1) AND s.id_estatus = 2
     LIMIT 1
   `;
 
-  const rows = await sequelize.query(query, { bind: [id], type: sequelize.QueryTypes.SELECT });
+  const rows = await sequelize.query(query, { bind: [String(id)], type: sequelize.QueryTypes.SELECT });
   return rows[0] || null;
 }
 
@@ -579,6 +584,10 @@ async function registrarOActualizarBecarioExterior(body, files = {}) {
 }
 
 async function registrarEgresado(body) {
+  return registrarOActualizarEgresado(body);
+}
+
+async function registrarOActualizarEgresado(body, explicitId = null) {
   const {
     id_usuario,
     nombre_completo,
@@ -605,62 +614,73 @@ async function registrarEgresado(body) {
     trabajando
   } = body;
 
-  const exists = await BecarioUnificado.findOne({
-    where: {
-      [Op.or]: [
-        ...(cedula ? [{ cedula: String(cedula) }] : []),
-        ...(correo ? [{ correo: String(correo) }] : [])
-      ]
-    }
-  });
-
-  if (exists) {
-    const error = new Error('El becario ya esta registrado con esta cedula o correo');
-    error.status = 400;
-    throw error;
+  let existing = null;
+  if (explicitId) {
+    const whereById = { [Op.or]: [{ id: String(explicitId) }] };
+    const numericId = parseIntOrNull(explicitId);
+    if (numericId !== null) whereById[Op.or].push({ id_usuario_legacy: numericId });
+    existing = await BecarioUnificado.findOne({ where: whereById });
+  } else {
+    existing = await BecarioUnificado.findOne({
+      where: {
+        [Op.or]: [
+          ...(cedula ? [{ cedula: String(cedula) }] : []),
+          ...(correo ? [{ correo: String(correo) }] : [])
+        ]
+      }
+    });
   }
 
-  const tipo = String(becario_tipo || '').toLowerCase() === 'internacional' ? 3 : 1;
-  const { nombres, apellidos } = splitNombreCompleto(nombre_completo);
+  const tipo = String(becario_tipo || existing?.id_tipo_becario || '').toLowerCase() === 'internacional' ? 3 : 1;
+  const { nombres, apellidos } = splitNombreCompleto(
+    nombre_completo || (existing ? `${existing.nombres} ${existing.apellidos}` : '')
+  );
 
   const t = await sequelize.transaction();
   try {
-    const becario = await BecarioUnificado.create({
-      id_usuario_legacy: parseIntOrNull(id_usuario),
+    const becarioPayload = {
+      id_usuario_legacy: parseIntOrNull(id_usuario) || existing?.id_usuario_legacy || null,
       id_tipo_becario: tipo,
-      cedula: String(cedula || ''),
+      cedula: String(cedula || existing?.cedula || ''),
       nombres,
       apellidos,
-      correo: correo || null,
-      telefono_principal: telefono_celular || null,
-      fecha_nacimiento: fecha_nacimiento || null,
-      estado: codigoestado || null,
-      municipio: codigomunicipio || null,
-      parroquia: codigoparroquia || null,
-      latitud: latitud || null,
-      longitud: longitud || null,
-      direccion: direccion || null,
-      es_militar: es_militar || null,
-      pais_origen: descripcion_becario || null
-    }, { transaction: t });
+      correo: pickValue(correo, existing?.correo || null),
+      telefono_principal: pickValue(telefono_celular, existing?.telefono_principal || null),
+      fecha_nacimiento: pickValue(fecha_nacimiento, existing?.fecha_nacimiento || null),
+      estado: pickValue(codigoestado, existing?.estado || null),
+      municipio: pickValue(codigomunicipio, existing?.municipio || null),
+      parroquia: pickValue(codigoparroquia, existing?.parroquia || null),
+      latitud: pickValue(latitud, existing?.latitud || null),
+      longitud: pickValue(longitud, existing?.longitud || null),
+      direccion: pickValue(direccion, existing?.direccion || null),
+      es_militar: pickValue(es_militar, existing?.es_militar || null),
+      pais_origen: pickValue(descripcion_becario, existing?.pais_origen || null)
+    };
 
-    await EstudioBecario.create({
-      id_becario: becario.id,
-      id_estatus: 2,
-      id_institucion: parseIntOrNull(universidad),
-      institucion_nombre: parseIntOrNull(universidad) ? null : (universidad || null),
-      id_carrera: parseIntOrNull(carrera_cursada),
-      carrera_nombre: parseIntOrNull(carrera_cursada) ? null : (carrera_cursada || null),
-      fecha_egreso: fecha_egreso || null,
-      tipo_beca: tipo_beca || null,
-      estado_estudio: titularidad || null,
-      idiomas: idiomas || null,
-      ocupacion_actual: ocupacion_actual || null,
-      trabajando: trabajando || null
-    }, { transaction: t });
+    const becario = existing
+      ? await existing.update(becarioPayload, { transaction: t })
+      : await BecarioUnificado.create(becarioPayload, { transaction: t });
+
+    await upsertEstudio(
+      becario.id,
+      {
+        id_estatus: 2,
+        id_institucion: parseIntOrNull(universidad),
+        institucion_nombre: parseIntOrNull(universidad) ? null : (universidad || null),
+        id_carrera: parseIntOrNull(carrera_cursada),
+        carrera_nombre: parseIntOrNull(carrera_cursada) ? null : (carrera_cursada || null),
+        fecha_egreso: fecha_egreso || null,
+        tipo_beca: tipo_beca || null,
+        estado_estudio: titularidad || null,
+        idiomas: idiomas || null,
+        ocupacion_actual: ocupacion_actual || null,
+        trabajando: trabajando || null
+      },
+      t
+    );
 
     await t.commit();
-    const detalle = await obtenerDetalleEgresado(becario.id_usuario_legacy);
+    const detalle = await obtenerDetalleEgresado(becario.id);
     return detalle;
   } catch (error) {
     await t.rollback();
@@ -688,5 +708,6 @@ module.exports = {
   registrarOActualizarBecarioVenezuela,
   registrarOActualizarBecarioExterior,
   registrarEgresado,
+  registrarOActualizarEgresado,
   eliminarBecarioExterior
 };

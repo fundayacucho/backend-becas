@@ -17,7 +17,8 @@ const {
   anexo_constancia,
   saveBecarioEsteriol,
   tbl_pais,
-  delete_becario_exterior
+  delete_becario_exterior,
+  upsert_becario_por_tipo
 } = require('../controllers/becariosController');
 
 // Ruta para registro con upload de archivos
@@ -38,6 +39,28 @@ router.post('/registroBecarioExteriol', upload.fields([
   { name: 'Contrato_convenio', maxCount: 1 },
   { name: 'constancia_semestre', maxCount: 1 },
 ]), saveBecarioEsteriol);
+
+router.post('/upsert-por-tipo', upload.fields([
+  { name: 'anexoCedula', maxCount: 1 },
+  { name: 'anexoConstancia', maxCount: 1 },
+  { name: 'anexoResidencia', maxCount: 1 },
+  { name: 'anexoFoto', maxCount: 1 },
+  { name: 'anexoPasaporte', maxCount: 1 },
+  { name: 'anexoVisa', maxCount: 1 },
+  { name: 'Contrato_convenio', maxCount: 1 },
+  { name: 'constancia_semestre', maxCount: 1 },
+]), upsert_becario_por_tipo);
+
+router.put('/upsert-por-tipo/:id', upload.fields([
+  { name: 'anexoCedula', maxCount: 1 },
+  { name: 'anexoConstancia', maxCount: 1 },
+  { name: 'anexoResidencia', maxCount: 1 },
+  { name: 'anexoFoto', maxCount: 1 },
+  { name: 'anexoPasaporte', maxCount: 1 },
+  { name: 'anexoVisa', maxCount: 1 },
+  { name: 'Contrato_convenio', maxCount: 1 },
+  { name: 'constancia_semestre', maxCount: 1 },
+]), upsert_becario_por_tipo);
 
 
 // la ru/home/fundaya/becarios/servidor_becarios/uploads/becarios/anexos/19969775_cedula.jpg

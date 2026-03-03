@@ -9,7 +9,7 @@ class User {
   const query = `
     INSERT INTO usuarios (cedula, nacionalidad, email, tipo_usuario, password,id_rol) 
     VALUES ($1, $2, $3, $4, $5, $6) 
-    RETURNING id, cedula, nacionalidad, email, tipo_usuario, created_at 
+    RETURNING id, cedula, nacionalidad, email, tipo_usuario
   `;
   
   const result = await pool.query(query, [cedula, nacionalidad, email, tipo_usuario, hashedPassword ,id_rol]);
@@ -23,7 +23,19 @@ class User {
   }
 
   static async findById(id) {
-    const query = 'SELECT id, cedula, email,  created_at FROM usuarios WHERE id = $1';
+    const query = `
+      SELECT
+        id,
+        cedula,
+        email,
+        COALESCE(
+          to_jsonb(u)->>'created_at',
+          to_jsonb(u)->>'createdAt',
+          to_jsonb(u)->>'fecha_creacion'
+        ) AS created_at
+      FROM usuarios u
+      WHERE id = $1
+    `;
     const result = await pool.query(query, [id]);
     return result.rows[0];
   }
@@ -31,15 +43,23 @@ class User {
   static async findAll() {
     const query = `
       SELECT 
-        id, 
-        cedula, 
-        email, 
-        tipo_usuario, 
-        created_at 
-      FROM 
-        usuarios 
-      ORDER BY 
-        created_at DESC
+        u.id,
+        u.cedula,
+        u.email,
+        u.tipo_usuario,
+        u.id_rol,
+        u.activo,
+        u.nombre_completo,
+        r.codigo AS rol_codigo,
+        r.nombre AS rol_nombre,
+        COALESCE(
+          to_jsonb(u)->>'created_at',
+          to_jsonb(u)->>'createdAt',
+          to_jsonb(u)->>'fecha_creacion'
+        ) AS created_at
+      FROM usuarios u
+      LEFT JOIN cat_roles r ON r.id = u.id_rol
+      ORDER BY u.id DESC
     `;
     
     const result = await pool.query(query);
