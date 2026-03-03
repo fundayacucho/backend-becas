@@ -1,4 +1,4 @@
-const pool = require('../config/database');
+﻿const { pool } = require('../config/database');
 
 class Becarios {
   // Crear un nuevo becario
@@ -103,7 +103,7 @@ static async create_egresado(becarioData) {
     RETURNING *
   `;
 
-  // Asegúrate de que fecha_nacimiento tenga un valor válido
+  // AsegÃºrate de que fecha_nacimiento tenga un valor vÃ¡lido
   if (!becarioData.fecha_nacimiento) {
     throw new Error('La fecha de nacimiento es obligatoria');
   }
@@ -194,7 +194,7 @@ static async create_becario_esteriol(becarioData) {
     )
     RETURNING *
   `;
-  // Asegúrate de que fecha_nacimiento tenga un valor válido
+  // AsegÃºrate de que fecha_nacimiento tenga un valor vÃ¡lido
   if (!becarioData.fecha_nacimiento) {
     throw new Error('La fecha de nacimiento es obligatoria');
   }
@@ -333,7 +333,7 @@ static async update_esteriol(id_usuario, becarioData) {
 
 
 
-  // Buscar por cédula o correo
+  // Buscar por cÃ©dula o correo
   static async findByCedulaOrEmail(cedula, correo) {
     const query = `
       SELECT * FROM becarios 
@@ -468,7 +468,7 @@ static async update_esteriol(id_usuario, becarioData) {
       const result = await pool.query(selectQuery, [id_usuario]);
       
       if (result.rows.length === 0) {
-        throw new Error('No se pudo encontrar el becario después de la actualización');
+        throw new Error('No se pudo encontrar el becario despuÃ©s de la actualizaciÃ³n');
       }
       
       return result.rows[0];
@@ -480,7 +480,7 @@ static async update_esteriol(id_usuario, becarioData) {
 
   // Eliminar becario
   static async delete(id) {
-    // Implementar según necesidad
+    // Implementar segÃºn necesidad
   }
 
 

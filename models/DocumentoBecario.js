@@ -2,7 +2,7 @@ const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 const BecarioUnificado = require('./BecarioUnificado');
 const CatTipoDocumento = require('./CatTipoDocumento');
-// const fileManager = require('../utils/fileManager'); // Lo importaremos luego en Sprint 4
+const fileManager = require('../utils/fileManager');
 
 const DocumentoBecario = sequelize.define('DocumentoBecario', {
   id: {
@@ -39,12 +39,10 @@ const DocumentoBecario = sequelize.define('DocumentoBecario', {
   timestamps: true
 });
 
-/* Sprint 4 (Clean Code) 
 DocumentoBecario.addHook('beforeDestroy', async (documento) => {
   if (documento.ruta_archivo) {
-     fileManager.deleteFile(documento.ruta_archivo);
+    fileManager.deleteFile(documento.ruta_archivo);
   }
-}); 
-*/
+});
 
 module.exports = DocumentoBecario;

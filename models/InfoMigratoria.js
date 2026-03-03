@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 const BecarioUnificado = require('./BecarioUnificado');
+const fileManager = require('../utils/fileManager');
 
 const InfoMigratoria = sequelize.define('InfoMigratoria', {
   id: {
@@ -28,6 +29,12 @@ const InfoMigratoria = sequelize.define('InfoMigratoria', {
 }, {
   tableName: 'info_migratoria',
   timestamps: true
+});
+
+InfoMigratoria.addHook('beforeDestroy', async (info) => {
+  if (info.contrato_firmado) {
+    fileManager.deleteFile(info.contrato_firmado);
+  }
 });
 
 module.exports = InfoMigratoria;
