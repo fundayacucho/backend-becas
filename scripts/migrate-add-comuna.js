@@ -18,9 +18,9 @@ async function run() {
 
     console.log('Ejecutando migracion: 004_add_comuna_to_becarios_unificados.sql');
     await pool.query(sql);
-    console.log('Migracion completada: columna comuna agregada a becarios_unificados.');
+    console.log('Migracion completada: columnas comuna y codigoestado2 agregadas a becarios_unificados.');
   } catch (error) {
-    console.error('Error ejecutando migracion de columna comuna:', error);
+    console.error('Error ejecutando migracion de columnas:', error);
     process.exitCode = 1;
   } finally {
     await pool.end();
