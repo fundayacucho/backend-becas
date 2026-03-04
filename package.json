@@ -11,6 +11,8 @@
     "db:setup": "node scripts/setup-db.js",
     "db:migrate": "node scripts/migrate-to-v2.js",
     "db:migrate:add-nacionalidad-usuarios": "node scripts/migrate-add-nacionalidad-usuarios.js",
+    "db:migrate:add-missing-columns": "node scripts/migrate-add-missing-columns.js",
+    "db:migrate:add-comuna": "node scripts/migrate-add-comuna.js",
     "db:import-extranjeros": "node scripts/import-extranjeros.js",
     "db:all": "npm run db:setup && npm run db:migrate && npm run db:import-extranjeros",
     "check:permissions": "node scripts/check-permissions.js"

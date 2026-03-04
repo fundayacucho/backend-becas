@@ -24,16 +24,21 @@ function ensureDirectories() {
   const dirs = Object.values(getManagedDirs());
   for (const dir of dirs) {
     try {
+      console.log(`Verificando directorio: ${dir}`);
       if (!fs.existsSync(dir)) {
+        console.log(`Creando directorio: ${dir}`);
         fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
         console.log(`Directorio creado: ${dir}`);
       }
       
       // Verificar que tenemos permisos de escritura
+      console.log(`Verificando permisos de escritura en: ${dir}`);
       fs.accessSync(dir, fs.constants.W_OK);
+      console.log(`Permisos OK para: ${dir}`);
     } catch (error) {
+      console.error(`Error en directorio ${dir}:`, error);
       if (error.code === 'EACCES') {
-        throw new Error(`Sin permisos para crear o escribir en directorio: ${dir}. Verifique ownership y permisos.`);
+        throw new Error(`Sin permisos para crear o escribir en directorio: ${dir}. Verifique ownership y permisos. Usuario del proceso: ${process.getuid ? process.getuid() : 'desconocido'}`);
       } else {
         throw new Error(`Error al verificar directorio ${dir}: ${error.message}`);
       }
