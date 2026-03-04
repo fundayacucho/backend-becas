@@ -5,15 +5,27 @@ class User {
  static async create(userData) {
   const { cedula, nacionalidad, email, tipo_usuario, password,id_rol } = userData;
   const hashedPassword = await bcrypt.hash(password, 10);
-  
-  const query = `
-    INSERT INTO usuarios (cedula, nacionalidad, email, tipo_usuario, password,id_rol) 
-    VALUES ($1, $2, $3, $4, $5, $6) 
-    RETURNING id, cedula, nacionalidad, email, tipo_usuario
-  `;
-  
-  const result = await pool.query(query, [cedula, nacionalidad, email, tipo_usuario, hashedPassword ,id_rol]);
-  return result.rows[0];
+
+  try {
+    const query = `
+      INSERT INTO usuarios (cedula, nacionalidad, email, tipo_usuario, password,id_rol)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, cedula, nacionalidad, email, tipo_usuario
+    `;
+    const result = await pool.query(query, [cedula, nacionalidad || 'V', email, tipo_usuario, hashedPassword, id_rol]);
+    return result.rows[0];
+  } catch (error) {
+    // Compatibilidad con bases legacy donde usuarios aun no tiene columna nacionalidad.
+    if (error?.code !== '42703') throw error;
+
+    const fallbackQuery = `
+      INSERT INTO usuarios (cedula, email, tipo_usuario, password,id_rol)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, cedula, email, tipo_usuario
+    `;
+    const result = await pool.query(fallbackQuery, [cedula, email, tipo_usuario, hashedPassword, id_rol]);
+    return { ...result.rows[0], nacionalidad: nacionalidad || 'V' };
+  }
 }
 
   static async findByEmail(email) {
