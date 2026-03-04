@@ -14,7 +14,7 @@ async function run() {
 
   try {
     const migrationPath = path.join(__dirname, '..', 'migrations', '002_add_nacionalidad_to_usuarios.sql');
-    const sql = fs.readFileSync(migrationPath, 'utf8');
+    const sql = fs.readFileSync(migrationPath, 'utf8').replace(/^\uFEFF/, '');
 
     console.log('Ejecutando migracion: 002_add_nacionalidad_to_usuarios.sql');
     await pool.query(sql);
