@@ -306,7 +306,7 @@ async function obtenerDetalleBecarioExterior(id) {
     FROM becarios_unificados b
     LEFT JOIN (
       SELECT DISTINCT ON (id_becario)
-        id_becario, id_institucion, institucion_nombre, id_carrera, carrera_nombre, nivel_academico, idiomas, ocupacion_actual, trabajando, tipo_beca AS tipo_estudiante, anio_ingreso, semestre_actual, "tipoTarea", "dependencia"
+        id_becario, id_institucion, institucion_nombre, id_carrera, carrera_nombre, nivel_academico, estado_estudio, idiomas, ocupacion_actual, trabajando, tipo_beca AS tipo_estudiante, anio_ingreso, semestre_actual, "tipoTarea", "dependencia"
       FROM estudios_becario
       ORDER BY id_becario, "createdAt" DESC
     ) s ON s.id_becario = b.id
@@ -488,10 +488,20 @@ async function registrarOActualizarBecarioVenezuela(body, files = {}) {
 
     await t.commit();
 
-    const detalle = await obtenerDetalleBecario(payload.id_usuario_legacy);
+    let detalle;
+    try {
+      detalle = await obtenerDetalleBecario(payload.id_usuario_legacy);
+    } catch (queryError) {
+      console.error('Error al obtener detalle después de commit:', queryError.message);
+      throw queryError;
+    }
+
     return { isUpdate: !!existing, becario: detalle };
   } catch (error) {
-    await t.rollback();
+    // Solo hacer rollback si la transacción aún está activa
+    if (t && !t.finished) {
+      await t.rollback();
+    }
     throw error;
   }
 }
@@ -521,7 +531,10 @@ async function registrarOActualizarBecarioExterior(body, files = {}) {
     latitud,
     longitud,
     latitud_pais,
-    longitud_pais
+    longitud_pais,
+    titularidad,
+    nivel_academico,
+    estadoBeca
   } = body;
 
   const t = await sequelize.transaction();
@@ -577,7 +590,10 @@ async function registrarOActualizarBecarioExterior(body, files = {}) {
         id_carrera: parseIntOrNull(carrera),
         carrera_nombre: parseIntOrNull(carrera) ? null : (carrera || null),
         anio_ingreso: extraerAnio(anioIngreso),
-        semestre_actual: semestreActual || null
+        semestre_actual: semestreActual || null,
+        nivel_academico: nivel_academico || null,
+        estado_estudio: estadoBeca || null,
+        estado_estudio: titularidad
       },
       t
     );
@@ -599,10 +615,21 @@ async function registrarOActualizarBecarioExterior(body, files = {}) {
 
     await t.commit();
 
-    const detalle = await obtenerDetalleBecarioExterior(payload.id_usuario_legacy);
+    let detalle;
+    try {
+      detalle = await obtenerDetalleBecarioExterior(payload.id_usuario_legacy);
+    } catch (queryError) {
+      // Si hay error al obtener el detalle, no afectar la transacción ya committed
+      console.error('Error al obtener detalle después de commit:', queryError.message);
+      throw queryError;
+    }
+
     return { isUpdate: !!existing, becario: detalle };
   } catch (error) {
-    await t.rollback();
+    // Solo hacer rollback si la transacción aún está activa
+    if (t && !t.finished) {
+      await t.rollback();
+    }
     throw error;
   }
 }
@@ -704,10 +731,21 @@ async function registrarOActualizarEgresado(body, explicitId = null) {
     );
 
     await t.commit();
-    const detalle = await obtenerDetalleEgresado(becario.id);
+    
+    let detalle;
+    try {
+      detalle = await obtenerDetalleEgresado(becario.id);
+    } catch (queryError) {
+      console.error('Error al obtener detalle después de commit:', queryError.message);
+      throw queryError;
+    }
+    
     return detalle;
   } catch (error) {
-    await t.rollback();
+    // Solo hacer rollback si la transacción aún está activa
+    if (t && !t.finished) {
+      await t.rollback();
+    }
     throw error;
   }
 }
