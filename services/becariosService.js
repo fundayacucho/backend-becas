@@ -229,6 +229,8 @@ async function obtenerDetalleBecario(id) {
       s.turno_estudio,
       s.modalidad_estudio,
       s.tipo_beca AS programa_beca,
+      s."tipoTarea",
+      s."dependencia",
       b.latitud,
       b.longitud,
       MAX(CASE WHEN d.id_tipo_documento = 1 THEN d.ruta_archivo END) AS anexo_cedula,
@@ -241,7 +243,7 @@ async function obtenerDetalleBecario(id) {
     LEFT JOIN (
       SELECT DISTINCT ON (id_becario)
         id_becario, id_institucion, institucion_nombre, id_carrera, carrera_nombre,
-        anio_ingreso, semestre_actual, idiomas, ocupacion_actual, trabajando, turno_estudio, nivel_academico, estado_estudio, modalidad_estudio, tipo_beca
+        anio_ingreso, semestre_actual, idiomas, ocupacion_actual, trabajando, turno_estudio, nivel_academico, estado_estudio, "tipoTarea", "dependencia", modalidad_estudio, tipo_beca
       FROM estudios_becario
       ORDER BY id_becario, "createdAt" DESC
     ) s ON s.id_becario = b.id
@@ -252,7 +254,7 @@ async function obtenerDetalleBecario(id) {
     WHERE b.id_usuario_legacy = $1 AND b.id_tipo_becario = 1
     GROUP BY b.id, b.id_usuario_legacy, e.nombre, m.nombre, p.nombre,
              s.id_institucion, s.institucion_nombre, s.id_carrera, s.carrera_nombre,
-             s.anio_ingreso, s.semestre_actual, s.turno_estudio, s.modalidad_estudio, s.tipo_beca, s.nivel_academico, s.estado_estudio
+             s.anio_ingreso, s.semestre_actual, s.turno_estudio, s.modalidad_estudio, s.tipo_beca, s.nivel_academico, s.estado_estudio , s."tipoTarea", s."dependencia"
     LIMIT 1
   `;
 
@@ -290,6 +292,8 @@ async function obtenerDetalleBecarioExterior(id) {
       COALESCE(s.carrera_nombre, CAST(s.id_carrera AS TEXT), '') AS carrera,
       s.anio_ingreso,
       s.semestre_actual,
+      s."tipoTarea",
+      s."dependencia",
       b.latitud,
       b.longitud,
       b.latitud_pais,
@@ -302,7 +306,7 @@ async function obtenerDetalleBecarioExterior(id) {
     FROM becarios_unificados b
     LEFT JOIN (
       SELECT DISTINCT ON (id_becario)
-        id_becario, id_institucion, institucion_nombre, id_carrera, carrera_nombre, nivel_academico, idiomas, ocupacion_actual, trabajando, tipo_beca AS tipo_estudiante, anio_ingreso, semestre_actual
+        id_becario, id_institucion, institucion_nombre, id_carrera, carrera_nombre, nivel_academico, idiomas, ocupacion_actual, trabajando, tipo_beca AS tipo_estudiante, anio_ingreso, semestre_actual, "tipoTarea", "dependencia"
       FROM estudios_becario
       ORDER BY id_becario, "createdAt" DESC
     ) s ON s.id_becario = b.id
@@ -313,7 +317,7 @@ async function obtenerDetalleBecarioExterior(id) {
     WHERE b.id_usuario_legacy = $1 AND b.id_tipo_becario = 2
     GROUP BY b.id, b.id_usuario_legacy, e.nombre, m.nombre, p.nombre,
              s.id_institucion, s.institucion_nombre, s.id_carrera, s.carrera_nombre,
-             s.anio_ingreso, s.semestre_actual, s.tipo_estudiante, s.nivel_academico, s.estado_estudio
+             s.anio_ingreso, s.semestre_actual, s.tipo_estudiante, s.nivel_academico, s.estado_estudio, s."tipoTarea", s."dependencia"
     LIMIT 1
   `;
 
@@ -349,12 +353,14 @@ async function obtenerDetalleEgresado(id) {
       s.ocupacion_actual,
       COALESCE(s.institucion_nombre, CAST(s.id_institucion AS TEXT), '') AS universidad,
       COALESCE(s.carrera_nombre, CAST(s.id_carrera AS TEXT), '') AS carrera_cursada,
-      s.trabajando
+      s.trabajando,
+      s."tipoTarea",
+      s."dependencia"
     FROM becarios_unificados b
     LEFT JOIN (
       SELECT DISTINCT ON (id_becario)
         id_becario, id_estatus, id_institucion, institucion_nombre, id_carrera, carrera_nombre,
-        fecha_egreso, tipo_beca, estado_estudio, idiomas, ocupacion_actual, trabajando
+        fecha_egreso, tipo_beca, estado_estudio, idiomas, ocupacion_actual, trabajando, "tipoTarea", "dependencia"
       FROM estudios_becario
       ORDER BY id_becario, "createdAt" DESC
     ) s ON s.id_becario = b.id
