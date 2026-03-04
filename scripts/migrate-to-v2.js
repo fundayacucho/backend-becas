@@ -262,7 +262,8 @@ async function migrarBecariosNacionales() {
           parroquia: padCode(row.codigo_parroquia, 6),
           direccion: row.direccion,
           latitud: row.latitud ? String(row.latitud) : null,
-          longitud: row.longitud ? String(row.longitud) : null
+          longitud: row.longitud ? String(row.longitud) : null,
+          codigoestado2: padCode(row.codigoestado2, 2),
         },
         transaction: t
       });

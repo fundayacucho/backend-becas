@@ -23,8 +23,20 @@ function getManagedDirs() {
 function ensureDirectories() {
   const dirs = Object.values(getManagedDirs());
   for (const dir of dirs) {
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
+    try {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true, mode: 0o755 });
+        console.log(`Directorio creado: ${dir}`);
+      }
+      
+      // Verificar que tenemos permisos de escritura
+      fs.accessSync(dir, fs.constants.W_OK);
+    } catch (error) {
+      if (error.code === 'EACCES') {
+        throw new Error(`Sin permisos para crear o escribir en directorio: ${dir}. Verifique ownership y permisos.`);
+      } else {
+        throw new Error(`Error al verificar directorio ${dir}: ${error.message}`);
+      }
     }
   }
 }
@@ -54,15 +66,58 @@ function moveFileToFolder(file, folder, cedula, tipo) {
     throw new Error('Subcarpeta de destino no valida para adjunto');
   }
 
+  if (!file || !file.path) {
+    throw new Error('Archivo de origen invalido o sin ruta');
+  }
+
   const extension = path.extname(file.originalname || '');
   const fileName = `${cedula}_${tipo}${extension}`;
   const dirs = getManagedDirs();
   const targetPath = path.join(dirs[subfolder], fileName);
   const publicPath = buildPublicPath(subfolder, fileName);
 
-  ensureDirectories();
-  fs.renameSync(file.path, targetPath);
-  fs.chmodSync(targetPath, 0o644);
+  // Verificar que el archivo de origen existe
+  if (!fs.existsSync(file.path)) {
+    throw new Error(`Archivo de origen no existe: ${file.path}`);
+  }
+
+  // Asegurar que los directorios existan con permisos correctos
+  try {
+    ensureDirectories();
+  } catch (error) {
+    throw new Error(`Error al crear directorios: ${error.message}`);
+  }
+
+  // Verificar permisos del directorio destino
+  try {
+    fs.accessSync(dirs[subfolder], fs.constants.W_OK);
+  } catch (error) {
+    throw new Error(`Sin permisos de escritura en directorio destino: ${dirs[subfolder]} - ${error.message}`);
+  }
+
+  // Intentar mover el archivo con manejo de errores
+  try {
+    fs.renameSync(file.path, targetPath);
+  } catch (error) {
+    // Si rename falla, intentar copiar y luego borrar
+    if (error.code === 'EACCES' || error.code === 'EPERM') {
+      try {
+        fs.copyFileSync(file.path, targetPath);
+        fs.unlinkSync(file.path);
+      } catch (copyError) {
+        throw new Error(`Error al mover archivo (rename y copy fallaron): ${copyError.message}. Origen: ${file.path}, Destino: ${targetPath}`);
+      }
+    } else {
+      throw new Error(`Error al mover archivo: ${error.message}. Origen: ${file.path}, Destino: ${targetPath}`);
+    }
+  }
+
+  // Establecer permisos correctos al archivo destino
+  try {
+    fs.chmodSync(targetPath, 0o644);
+  } catch (error) {
+    console.warn(`Advertencia: no se pudieron establecer permisos del archivo ${targetPath}: ${error.message}`);
+  }
 
   return publicPath;
 }

@@ -75,7 +75,8 @@ const BecarioUnificado = sequelize.define('BecarioUnificado', {
   latitud_pais: { type: DataTypes.STRING(100) },
   longitud_pais: { type: DataTypes.STRING(100) },
   nacionalidad: { type: DataTypes.STRING(20) }, // "V" o "E" o "Venezolano"
-  es_militar: { type: DataTypes.STRING(20) }
+  es_militar: { type: DataTypes.STRING(20) },
+  codigoestado2: { type: DataTypes.STRING(100) },
 
 }, {
   tableName: 'becarios_unificados',
