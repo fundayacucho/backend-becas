@@ -9,6 +9,7 @@ API Node.js + Express para gestion de becarios con base de datos PostgreSQL y Se
 - `npm run test:e2e` ejecuta smoke E2E.
 - `npm run db:setup` crea estructura y catalogos en `becarios_v2`.
 - `npm run db:migrate` migra datos legacy a V2.
+- `npm run db:migrate:add-nacionalidad-usuarios` agrega `usuarios.nacionalidad` con default `V`.
 - `npm run db:import-extranjeros` importa CSV de extranjeros.
 
 ## Endpoints clave (legacy + nuevos)
@@ -60,3 +61,5 @@ Incluye:
 - LEGACY_DB_HOST (si no se define, usa DB_HOST)
 - LEGACY_DB_PORT (si no se define, usa DB_PORT)
 
+LEGACY_DB_USER=becario_backend
+LEGACY_DB_PASSWORD=
