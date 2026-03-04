@@ -126,6 +126,8 @@ const data_becario = async (req, res, next) => {
     const id = parseIdFromQuery(req);
     if (!id) return res.status(400).json({ message: 'id requerido' });
 
+  
+
     const data = await becariosService.obtenerDetalleBecario(id);
     if (!data) return res.status(404).json({ message: 'id no encontrado' });
 

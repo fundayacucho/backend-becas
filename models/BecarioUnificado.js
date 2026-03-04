@@ -60,6 +60,9 @@ const BecarioUnificado = sequelize.define('BecarioUnificado', {
   telefono_alternativo: {
     type: DataTypes.STRING(50)
   },
+  comuna: { type: DataTypes.STRING(100) },
+  codigoestado2: { type: DataTypes.STRING(100) },
+  
   estado: { type: DataTypes.STRING(100) },
   municipio: { type: DataTypes.STRING(100) },
   parroquia: { type: DataTypes.STRING(100) },

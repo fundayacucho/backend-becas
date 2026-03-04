@@ -44,6 +44,8 @@ const EstudioBecario = sequelize.define('EstudioBecario', {
   estado_estudio: { type: DataTypes.STRING(150) },
   fecha_egreso: { type: DataTypes.DATEONLY },
   tipo_beca: { type: DataTypes.STRING(150) },
+  tipoTarea: { type: DataTypes.STRING(150) },
+  dependencia: { type: DataTypes.STRING(150) },
   idiomas: { type: DataTypes.STRING(200) },
   ocupacion_actual: { type: DataTypes.STRING(150) },
   trabajando: { type: DataTypes.STRING(50) }

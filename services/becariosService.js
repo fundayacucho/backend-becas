@@ -123,7 +123,7 @@ async function obtenerPorTipo(idTipo, filters) {
     FROM becarios_unificados b
     LEFT JOIN (
       SELECT DISTINCT ON (id_becario)
-        id_becario, id_institucion, id_carrera, institucion_nombre, carrera_nombre, anio_ingreso, semestre_actual
+        id_becario, id_institucion, id_carrera, institucion_nombre, carrera_nombre, nivel_academico, anio_ingreso, semestre_actual
       FROM estudios_becario
       ORDER BY id_becario, "createdAt" DESC
     ) s ON s.id_becario = b.id
@@ -210,6 +210,9 @@ async function obtenerDetalleBecario(id) {
       b.correo,
       b.telefono_principal,
       b.telefono_alternativo,
+      b.comuna,
+      s.nivel_academico,
+      s.estado_estudio,
       b.direccion,
       b.estado AS codigo_estado,
       b.municipio AS codigo_municipio,
@@ -217,10 +220,12 @@ async function obtenerDetalleBecario(id) {
       e.nombre AS estado,
       m.nombre AS municipio,
       p.nombre AS parroquia,
+      b.codigoestado2,
       COALESCE(s.institucion_nombre, CAST(s.id_institucion AS TEXT), '') AS institucion,
       COALESCE(s.carrera_nombre, CAST(s.id_carrera AS TEXT), '') AS programa_estudio,
       s.anio_ingreso,
       s.semestre_actual,
+
       s.turno_estudio,
       s.modalidad_estudio,
       s.tipo_beca AS programa_beca,
@@ -236,7 +241,7 @@ async function obtenerDetalleBecario(id) {
     LEFT JOIN (
       SELECT DISTINCT ON (id_becario)
         id_becario, id_institucion, institucion_nombre, id_carrera, carrera_nombre,
-        anio_ingreso, semestre_actual, turno_estudio, modalidad_estudio, tipo_beca
+        anio_ingreso, semestre_actual, idiomas, ocupacion_actual, trabajando, turno_estudio, nivel_academico, estado_estudio, modalidad_estudio, tipo_beca
       FROM estudios_becario
       ORDER BY id_becario, "createdAt" DESC
     ) s ON s.id_becario = b.id
@@ -247,7 +252,7 @@ async function obtenerDetalleBecario(id) {
     WHERE b.id_usuario_legacy = $1 AND b.id_tipo_becario = 1
     GROUP BY b.id, b.id_usuario_legacy, e.nombre, m.nombre, p.nombre,
              s.id_institucion, s.institucion_nombre, s.id_carrera, s.carrera_nombre,
-             s.anio_ingreso, s.semestre_actual, s.turno_estudio, s.modalidad_estudio, s.tipo_beca
+             s.anio_ingreso, s.semestre_actual, s.turno_estudio, s.modalidad_estudio, s.tipo_beca, s.nivel_academico, s.estado_estudio
     LIMIT 1
   `;
 
@@ -278,6 +283,9 @@ async function obtenerDetalleBecarioExterior(id) {
       e.nombre AS estado,
       m.nombre AS municipio,
       p.nombre AS parroquia,
+      s.nivel_academico,
+      s.estado_estudio,
+
       COALESCE(s.institucion_nombre, CAST(s.id_institucion AS TEXT), '') AS institucion_academica,
       COALESCE(s.carrera_nombre, CAST(s.id_carrera AS TEXT), '') AS carrera,
       s.anio_ingreso,
@@ -294,7 +302,7 @@ async function obtenerDetalleBecarioExterior(id) {
     FROM becarios_unificados b
     LEFT JOIN (
       SELECT DISTINCT ON (id_becario)
-        id_becario, id_institucion, institucion_nombre, id_carrera, carrera_nombre, anio_ingreso, semestre_actual
+        id_becario, id_institucion, institucion_nombre, id_carrera, carrera_nombre, nivel_academico, idiomas, ocupacion_actual, trabajando, tipo_beca AS tipo_estudiante, anio_ingreso, semestre_actual
       FROM estudios_becario
       ORDER BY id_becario, "createdAt" DESC
     ) s ON s.id_becario = b.id
@@ -305,7 +313,7 @@ async function obtenerDetalleBecarioExterior(id) {
     WHERE b.id_usuario_legacy = $1 AND b.id_tipo_becario = 2
     GROUP BY b.id, b.id_usuario_legacy, e.nombre, m.nombre, p.nombre,
              s.id_institucion, s.institucion_nombre, s.id_carrera, s.carrera_nombre,
-             s.anio_ingreso, s.semestre_actual
+             s.anio_ingreso, s.semestre_actual, s.tipo_estudiante, s.nivel_academico, s.estado_estudio
     LIMIT 1
   `;
 
@@ -372,6 +380,7 @@ async function registrarOActualizarBecarioVenezuela(body, files = {}) {
     correo,
     telefonoPrincipal,
     telefonoAlternativo,
+    comuna,
     direccion,
     institucion,
     programaEstudio,
@@ -380,10 +389,14 @@ async function registrarOActualizarBecarioVenezuela(body, files = {}) {
     turnoEstudio,
     modalidadEstudio,
     programaBeca,
+    tipoTarea,
+    dependencia,
     estadoBeca,
     codigoestado,
     codigomunicipio,
     codigoparroquia,
+    codigoestado2,
+    nivel_academico,
     latitud,
     longitud
   } = body;
@@ -415,10 +428,12 @@ async function registrarOActualizarBecarioVenezuela(body, files = {}) {
       correo: correo || existing?.correo || null,
       telefono_principal: telefonoPrincipal || existing?.telefono_principal || null,
       telefono_alternativo: telefonoAlternativo || existing?.telefono_alternativo || null,
+      comuna: comuna || existing?.comuna || null,
       direccion: direccion || existing?.direccion || null,
       estado: codigoestado || existing?.estado || null,
       municipio: codigomunicipio || existing?.municipio || null,
       parroquia: codigoparroquia || existing?.parroquia || null,
+      codigoestado2: codigoestado2 || existing?.codigoestado2 || null,
       latitud: latitud || existing?.latitud || null,
       longitud: longitud || existing?.longitud || null
     };
@@ -440,7 +455,10 @@ async function registrarOActualizarBecarioVenezuela(body, files = {}) {
         turno_estudio: turnoEstudio || null,
         modalidad_estudio: modalidadEstudio || null,
         tipo_beca: programaBeca || null,
-        estado_estudio: estadoBeca || null
+        nivel_academico: nivel_academico || null,
+        estado_estudio: estadoBeca || null,
+        tipoTarea: tipoTarea || null,
+        dependencia: dependencia || null
       },
       t
     );
