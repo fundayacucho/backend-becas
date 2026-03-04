@@ -203,6 +203,7 @@ async function findOrCreateEstudio(payload, transaction) {
       id_carrera: payload.id_carrera,
       anio_ingreso: payload.anio_ingreso || null,
       fecha_egreso: payload.fecha_egreso || null
+      
     },
     defaults: payload,
     transaction
@@ -280,7 +281,9 @@ async function migrarBecariosNacionales() {
         semestre_actual: row.semestre_actual,
         turno_estudio: row.turno_estudio,
         modalidad_estudio: row.modalidad_estudio,
-        tipo_beca: row.programa_beca
+        tipo_beca: row.programa_beca,
+        tipoTarea: row.tipo_tarea || null,
+        dependencia: row.dependencia || null
       }, t);
 
       // Documentos (Legacy paths)

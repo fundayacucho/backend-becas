@@ -49,6 +49,7 @@ const EstudioBecario = sequelize.define('EstudioBecario', {
   idiomas: { type: DataTypes.STRING(200) },
   ocupacion_actual: { type: DataTypes.STRING(150) },
   trabajando: { type: DataTypes.STRING(50) }
+  
 }, {
   tableName: 'estudios_becario',
   timestamps: true
