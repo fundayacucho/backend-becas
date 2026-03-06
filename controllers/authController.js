@@ -13,6 +13,55 @@ const getUsuarios = async (req, res) => {
   }
 };
 
+const getRoles = async (req, res) => {
+  try {
+    const roles = await CatRoles.findAll({
+      attributes: ['id', 'codigo', 'nombre', 'descripcion']
+    });
+    res.json(roles);
+  } catch (error) {
+    res.status(500).json({ message: 'Error del servidor', error: error.message });
+  }
+};
+
+const updateUsuarioRol = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id_rol } = req.body;
+
+    if (!id_rol) {
+      return res.status(400).json({ message: 'El id_rol es requerido' });
+    }
+
+    // Verificar que el rol exista
+    const rol = await CatRoles.findByPk(id_rol);
+    if (!rol) {
+      return res.status(404).json({ message: 'Rol no encontrado' });
+    }
+
+    // Verificar que el usuario exista
+    const usuario = await Usuario.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    // Actualizar el rol del usuario
+    await usuario.update({ id_rol });
+
+    res.status(200).json({ 
+      message: 'Rol de usuario actualizado exitosamente',
+      usuario: {
+        id: usuario.id,
+        id_rol: usuario.id_rol,
+        rol_codigo: rol.codigo,
+        rol_nombre: rol.nombre
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error del servidor', error: error.message });
+  }
+};
+
 const deleteUsuario = async (req, res) => {
   try {
     const { id } = req.body;
@@ -107,4 +156,4 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login, recupera_clave, getUsuarios, deleteUsuario };
+module.exports = { register, login, recupera_clave, getUsuarios, deleteUsuario, getRoles, updateUsuarioRol };
