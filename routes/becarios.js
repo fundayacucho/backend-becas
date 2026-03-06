@@ -2,6 +2,8 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../config/multerConfig');
+const { authenticateToken } = require('../middleware/auth');
+const { canView, canCreate, canEdit, canDelete } = require('../middleware/permissions');
 const {
   registroBecarios,
   register_egresado,
@@ -21,8 +23,24 @@ const {
   upsert_becario_por_tipo
 } = require('../controllers/becariosController');
 
-// Ruta para registro con upload de archivos
-router.post('/registro', upload.fields([
+// Apply authentication to all routes
+router.use(authenticateToken);
+
+// Rutas para ver datos (requieren permiso de ver)
+router.get('/anexo_cedula', canView, anexo_cedulas);
+router.get('/anexo_constancia', canView, anexo_constancia);
+router.get('/get_egresado', canView, data_egresado);
+router.get('/egresado', canView, get_egresado);
+router.get('/get_becario', canView, data_becario);
+router.get('/get_becario_esteriol', canView, get_becario_esteriol);
+router.get('/becarios', canView, becarios);
+router.get('/get_becarioesterior', canView, get_becarioesterior);
+router.get('/uner', canView, uner);
+router.get('/tbl_pais', canView, tbl_pais);
+router.get('/carreras', canView, get_carreras);
+
+// Rutas para crear/registro (requieren permiso de crear)
+router.post('/registro', canCreate, upload.fields([
   { name: 'anexoCedula', maxCount: 1 },
   { name: 'anexoConstancia', maxCount: 1 },
   { name: 'anexoResidencia', maxCount: 1 },
@@ -31,7 +49,7 @@ router.post('/registro', upload.fields([
   { name: 'constancia_semestre', maxCount: 1 },
 ]), registroBecarios);
 
-router.post('/registroBecarioExteriol', upload.fields([
+router.post('/registroBecarioExteriol', canCreate, upload.fields([
   { name: 'anexoCedula', maxCount: 1 },
   { name: 'anexoConstancia', maxCount: 1 },
   { name: 'anexoResidencia', maxCount: 1 },
@@ -40,7 +58,7 @@ router.post('/registroBecarioExteriol', upload.fields([
   { name: 'constancia_semestre', maxCount: 1 },
 ]), saveBecarioEsteriol);
 
-router.post('/upsert-por-tipo', upload.fields([
+router.post('/upsert-por-tipo', canCreate, upload.fields([
   { name: 'anexoCedula', maxCount: 1 },
   { name: 'anexoConstancia', maxCount: 1 },
   { name: 'anexoResidencia', maxCount: 1 },
@@ -51,7 +69,10 @@ router.post('/upsert-por-tipo', upload.fields([
   { name: 'constancia_semestre', maxCount: 1 },
 ]), upsert_becario_por_tipo);
 
-router.put('/upsert-por-tipo/:id', upload.fields([
+router.post('/register', canCreate, register_egresado);
+
+// Rutas para editar/actualizar (requieren permiso de editar)
+router.put('/upsert-por-tipo/:id', canEdit, upload.fields([
   { name: 'anexoCedula', maxCount: 1 },
   { name: 'anexoConstancia', maxCount: 1 },
   { name: 'anexoResidencia', maxCount: 1 },
@@ -62,25 +83,8 @@ router.put('/upsert-por-tipo/:id', upload.fields([
   { name: 'constancia_semestre', maxCount: 1 },
 ]), upsert_becario_por_tipo);
 
-
-// la ru/home/fundaya/becarios/servidor_becarios/uploads/becarios/anexos/19969775_cedula.jpg
-router.get('/anexo_cedula' ,  anexo_cedulas);
-router.get('/anexo_constancia' ,  anexo_constancia);
-
-router.post('/register', register_egresado);
-router.get('/get_egresado', data_egresado);
-router.get('/egresado', get_egresado);
-router.get('/get_becario', data_becario);
-router.get('/get_becario_esteriol', get_becario_esteriol);
-router.get('/becarios', becarios);
-router.get('/get_becarioesterior', get_becarioesterior);
-router.get('/uner', uner);
-router.get('/tbl_pais', tbl_pais);
-
-router.get('/carreras', get_carreras);
-
-// delete_becario metoso post
-router.post('/delete_becario',  delete_becario_exterior);
+// Rutas para eliminar (requieren permiso de borrar)
+router.post('/delete_becario', canDelete, delete_becario_exterior);
 
 
 

@@ -156,4 +156,127 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login, recupera_clave, getUsuarios, deleteUsuario, getRoles, updateUsuarioRol };
+const register_admin = async (req, res) => {
+  try {
+    const { 
+      cedula, 
+      nacionalidad = 'V', 
+      email, 
+      tipo_usuario = 'ADMIN', 
+      password, 
+      id_rol,
+      nombre_completo,
+      activo = true
+    } = req.body;
+
+    // Validaciones básicas
+    if (!cedula || !email || !password || !id_rol) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Los campos cedula, email, password e id_rol son requeridos' 
+      });
+    }
+
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'El formato del email es inválido' 
+      });
+    }
+
+    // Verificar que el rol exista
+    const rol = await CatRoles.findByPk(id_rol);
+    if (!rol) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'El rol especificado no existe' 
+      });
+    }
+
+    // Verificar si el usuario ya existe por email
+    const existingUserByEmail = await User.findByEmail(email);
+    if (existingUserByEmail) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Ya existe un usuario con este email' 
+      });
+    }
+
+    // Verificar si ya existe un usuario con la misma cédula
+    const { pool } = require('../config/database');
+    const existingUserByCedula = await pool.query(
+      'SELECT id FROM usuarios WHERE cedula = $1', 
+      [cedula]
+    );
+    if (existingUserByCedula.rows.length > 0) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Ya existe un usuario con esta cédula' 
+      });
+    }
+
+    // Validar longitud de la contraseña
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'La contraseña debe tener al menos 6 caracteres' 
+      });
+    }
+
+    // Crear el usuario
+    const newUser = await User.create({ 
+      cedula, 
+      nacionalidad, 
+      email, 
+      tipo_usuario, 
+      password, 
+      id_rol 
+    });
+
+    // Si se proporcionó nombre_completo, actualizarlo
+    if (nombre_completo) {
+      await pool.query(
+        'UPDATE usuarios SET nombre_completo = $1 WHERE id = $2',
+        [nombre_completo, newUser.id]
+      );
+    }
+
+    // Obtener el usuario creado con su rol
+    const usuarioConRol = await Usuario.findByPk(newUser.id, {
+      include: [{ model: CatRoles, as: 'rol', attributes: ['codigo', 'nombre'] }],
+      attributes: ['id', 'id_rol', 'tipo_usuario', 'cedula', 'email', 'nombre_completo', 'activo']
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Usuario administrador creado exitosamente',
+      data: {
+        id: newUser.id,
+        cedula: newUser.cedula,
+        email: newUser.email,
+        tipo_usuario: newUser.tipo_usuario,
+        nacionalidad: newUser.nacionalidad,
+        id_rol: newUser.id_rol,
+        nombre_completo: nombre_completo || null,
+        activo: activo,
+        rol: {
+          id: rol.id,
+          codigo: rol.codigo,
+          nombre: rol.nombre,
+          descripcion: rol.descripcion
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error en register_admin:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error del servidor al crear usuario administrador',
+      error: error.message 
+    });
+  }
+};
+
+module.exports = { register, login, recupera_clave, getUsuarios, deleteUsuario, getRoles, updateUsuarioRol, register_admin };

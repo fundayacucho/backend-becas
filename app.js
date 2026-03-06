@@ -11,6 +11,7 @@ const egresadoRoutes = require('./routes/becarios');
 const extranjerosRoutes = require('./routes/extranjerosVenezuela');
 const correoRoutes = require('./routes/correo');
 const constanciasInternacionalesRoutes = require('./routes/constanciasInternacionales');
+const rolesRoutes = require('./routes/roles');
 const { errorHandler } = require('./middleware/errorHandler');
 
 function createApp() {
@@ -47,6 +48,7 @@ function createApp() {
   app.use('/api/extranjeros', extranjerosRoutes);
   app.use('/api/correo', correoRoutes);
   app.use('/api/constancias-internacionales', constanciasInternacionalesRoutes);
+  app.use('/api/roles', rolesRoutes);
 
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
 

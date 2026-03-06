@@ -39,4 +39,11 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticateToken };
+const requireAdmin = (req, res, next) => {
+  if (!req.user || req.user.rol_codigo !== 'ADMIN') {
+    return res.status(403).json({ message: 'Se requieren permisos de administrador' });
+  }
+  next();
+};
+
+module.exports = { authenticateToken, requireAdmin };
