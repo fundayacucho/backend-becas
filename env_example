@@ -1,0 +1,16 @@
+NODE_ENV=development
+ BASE_URL=becarios.fundayacucho.gob.ve
+PORT=3001
+DB_USER=postgres
+DB_HOST=localhost
+DB_NAME=becario_v2
+LEGACY_DB_NAME=becario_newBecarios
+DB_PASSWORD=1234
+DB_PORT=5432
+LEGACY_DB_USER=postgres
+LEGACY_DB_PASSWORD=1234
+JWT_SECRET=tu_clave_secreta_jwt_muy_segura
+E2E_ADMIN_EMAIL=soporte@gmail.com
+E2E_ADMIN_PASSWORD=12345678
+UPLOAD_BASE_DIR=./uploads
+ALLOWED_ORIGINS=https://becarios.fundayacucho.gob.ve,http://localhost:5173,http://localhost:4000,http://localhost:3000
