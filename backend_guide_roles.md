@@ -53,7 +53,7 @@ exports.getPermisos = async (req, res) => {
 };
 
 // Actualizar permisos
-exports.updatePermisos = async (req, res) => {
+exports.updatePermisosRol = async (req, res) => {
   try {
     const { rol_id, permisos } = req.body; 
     // validaciones...
@@ -61,6 +61,26 @@ exports.updatePermisos = async (req, res) => {
     return res.status(200).json({ message: 'Permisos actualizados' });
   } catch (error) {
     return res.status(500).json({ error: 'Error al actualizar permisos' });
+  }
+};
+
+// Crear nuevo rol
+exports.createRole = async (req, res) => {
+  try {
+    const { rol_nombre, description, color, permisos } = req.body;
+    
+    // 1. Crear el nuevo rol en la tabla cat_roles (o equivalente)
+    const nuevoRol = await Rol.create({ rol_nombre, description, color });
+    
+    // 2. Crear los permisos por defecto para este nuevo rol
+    await PermisosRol.create({
+      rol_id: nuevoRol.id,
+      ...permisos
+    });
+    
+    return res.status(201).json({ message: 'Rol creado exitosamente', data: nuevoRol });
+  } catch (error) {
+    return res.status(500).json({ error: 'Error al crear el rol' });
   }
 };
 ```
@@ -81,7 +101,10 @@ router.get('/permisos', verifyAdmin, rolesController.getPermisos);
 
 // PUT: /api/roles/permisos
 // Importante: Solo un SuperAdmin debería tener permiso de cambiar permisos!
-router.put('/permisos', verifyAdmin, rolesController.updatePermisos);
+router.put('/permisos', verifyAdmin, rolesController.updatePermisosRol);
+
+// POST: /api/roles/crear
+router.post('/crear', verifyAdmin, rolesController.createRole);
 
 module.exports = router;
 ```

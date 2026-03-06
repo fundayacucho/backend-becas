@@ -19,4 +19,13 @@ router.put('/permisos', requireAdmin, rolesController.updatePermisos);
 // GET: /api/roles/con-permisos - Obtener todos los roles con sus permisos
 router.get('/con-permisos', requireAdmin, rolesController.getRolesConPermisos);
 
+// POST: /api/roles/crear - Crear nuevo rol
+router.post('/crear', requireAdmin, rolesController.createRole);
+
+// PUT: /api/roles/:id - Actualizar rol existente
+router.put('/:id', requireAdmin, rolesController.updateRole);
+
+// DELETE: /api/roles/:id - Eliminar rol
+router.delete('/:id', requireAdmin, rolesController.deleteRole);
+
 module.exports = router;
