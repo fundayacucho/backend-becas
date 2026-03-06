@@ -478,12 +478,3 @@ exports.deleteRole = async (req, res) => {
   }
 };
 
-module.exports = {
-  getPermisos,
-  getPermisosPorRol,
-  updatePermisos,
-  getRolesConPermisos,
-  createRole,
-  updateRole,
-  deleteRole
-};
