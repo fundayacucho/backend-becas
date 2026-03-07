@@ -111,6 +111,18 @@ function buildHtml(template, data = {}) {
     .map((line) => `<p>${replacePlaceholdersEscaped(line, data)}</p>`)
     .join('\n');
 
+  // Intentamos cargar el cintillo en base64 para la previsualización
+  let cintilloBase64 = '';
+  try {
+    const cintilloPath = path.join(__dirname, '..', 'uploads', 'cintillos', 'cintillo6.png');
+    if (fs.existsSync(cintilloPath)) {
+      const buffer = fs.readFileSync(cintilloPath);
+      cintilloBase64 = `data:image/png;base64,${buffer.toString('base64')}`;
+    }
+  } catch (e) {
+    console.error('Error cargando cintillo para HTML:', e.message);
+  }
+
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -120,6 +132,7 @@ function buildHtml(template, data = {}) {
   <style>
     body { font-family: 'Times New Roman', serif; color: #111; margin: 0; background: #f4f4f4; }
     .sheet { max-width: 840px; margin: 28px auto; background: #fff; border: 1px solid #d8d8d8; padding: 42px 56px; box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+    .cintillo { width: 100%; height: auto; margin-bottom: 20px; }
     .header { text-align: center; margin-bottom: 22px; }
     .header h1 { margin: 0; font-size: 20px; text-transform: uppercase; letter-spacing: .6px; }
     .header h2 { margin: 8px 0 0; font-size: 18px; text-transform: uppercase; }
@@ -131,6 +144,7 @@ function buildHtml(template, data = {}) {
 </head>
 <body>
   <main class="sheet">
+    ${cintilloBase64 ? `<img src="${cintilloBase64}" class="cintillo" alt="Cintillo" />` : ''}
     <header class="header">
       <h1>${replacePlaceholdersEscaped(template.encabezado, data)}</h1>
       <h2>${replacePlaceholdersEscaped(template.subtitulo, data)}</h2>
@@ -144,13 +158,25 @@ function buildHtml(template, data = {}) {
 </html>`;
 }
 
+
 function buildPdf(template, data = {}) {
   const doc = new PDFDocument({ size: 'A4', margin: 56 });
   const chunks = [];
   doc.on('data', (chunk) => chunks.push(chunk));
 
+  try {
+    const cintilloPath = path.join(__dirname, '..', 'uploads', 'cintillos', 'cintillo6.png');
+    if (fs.existsSync(cintilloPath)) {
+      doc.image(cintilloPath, 56, 30, { width: 500 });
+      doc.moveDown(4);
+    }
+  } catch (e) {
+    console.error('Error añadiendo cintillo al PDF:', e.message);
+  }
+
   doc.font('Times-Roman').fillColor('#111111');
   doc.fontSize(15).text(replacePlaceholders(template.encabezado, data), { align: 'center' });
+
   doc.moveDown(0.3).fontSize(14).text(replacePlaceholders(template.subtitulo, data), { align: 'center' });
   doc.moveDown(1.2).fontSize(12).text(replacePlaceholders(template.ciudad_fecha, data), { align: 'right' });
   doc.moveDown(1);
