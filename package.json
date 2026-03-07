@@ -15,7 +15,10 @@
     "db:migrate:add-comuna": "node scripts/migrate-add-comuna.js",
     "db:import-extranjeros": "node scripts/import-extranjeros.js",
     "db:all": "npm run db:setup && npm run db:migrate && npm run db:import-extranjeros",
-    "check:permissions": "node scripts/check-permissions.js"
+    "check:permissions": "node scripts/check-permissions.js",
+    "db:setup-tipos-registro": "node scripts/setup-tipos-registro.js",
+    "db:fix-roles-sequence": "node scripts/fix-roles-sequence.js",
+    "mcp": "node mcp-server/index.js"
   },
   "keywords": [],
   "author": "",

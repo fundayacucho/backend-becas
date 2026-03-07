@@ -18,6 +18,8 @@ const Parroquia = require('./Parroquia');
 const Pais = require('./Pais');
 const Uner = require('./Uner');
 const Carrera = require('./Carrera');
+const TipoRegistro = require('./TipoRegistro');
+
 
 // 2. Establecer Asociaciones (Relaciones entre tablas)
 
@@ -62,5 +64,7 @@ module.exports = {
   Parroquia,
   Pais,
   Uner,
-  Carrera
+  Carrera,
+  TipoRegistro
 };
+

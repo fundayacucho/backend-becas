@@ -115,18 +115,20 @@ const get_egresado = async (req, res, next) => {
     if (!data || data.length === 0) {
       return res.status(404).json({ message: 'No se encontraron becarios con los criterios especificados' });
     }
-    return res.json(data);
+    const formattedData = data.map(formatBecarioLegacy);
+    return res.json(formattedData);
   } catch (error) {
     return next(error);
   }
 };
+
 
 const data_becario = async (req, res, next) => {
   try {
     const id = parseIdFromQuery(req);
     if (!id) return res.status(400).json({ message: 'id requerido' });
 
-  
+
 
     const data = await becariosService.obtenerDetalleBecario(id);
     if (!data) return res.status(404).json({ message: 'id no encontrado' });
@@ -157,11 +159,14 @@ const becarios = async (req, res, next) => {
     if (!data || data.length === 0) {
       return res.status(404).json({ message: 'No se encontraron becarios con los criterios especificados' });
     }
-    return res.json(data);
+    // Formatear cada becario para incluir las URLs de los anexos
+    const formattedData = data.map(formatBecarioLegacy);
+    return res.json(formattedData);
   } catch (error) {
     return next(error);
   }
 };
+
 
 const get_becarioesterior = async (req, res, next) => {
   try {
@@ -169,11 +174,13 @@ const get_becarioesterior = async (req, res, next) => {
     if (!data || data.length === 0) {
       return res.status(404).json({ message: 'No se encontraron becarios del exterior' });
     }
-    return res.json(data);
+    const formattedData = data.map(formatBecarioLegacy);
+    return res.json(formattedData);
   } catch (error) {
     return next(error);
   }
 };
+
 
 const uner = async (req, res, next) => {
   try {

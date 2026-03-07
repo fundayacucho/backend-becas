@@ -103,36 +103,82 @@ async function obtenerPorTipo(idTipo, filters) {
       b.correo,
       b.telefono_principal,
       b.telefono_alternativo,
+      b.genero,
+      b.fecha_nacimiento,
+      b.nacionalidad,
+      b.comuna,
+      b.es_militar,
+      b.direccion,
       b.estado AS codigoestado,
       b.municipio AS codigomunicipio,
       b.parroquia AS codigoparroquia,
       e.nombre AS estado,
       m.nombre AS municipio,
       p.nombre AS parroquia,
-      COALESCE(s.institucion_nombre, CAST(s.id_institucion AS TEXT), '') AS institucion,
-      COALESCE(s.carrera_nombre, CAST(s.id_carrera AS TEXT), '') AS programa_estudio,
+      COALESCE(s.institucion_nombre, u_cat.nombre_uner, CAST(s.id_institucion AS TEXT), '') AS institucion,
+      COALESCE(s.carrera_nombre, c_cat.carreras, CAST(s.id_carrera AS TEXT), '') AS programa_estudio,
       s.anio_ingreso,
       s.semestre_actual,
+      s.semestre_actual AS "semestreActual",
+      s.tipo_beca,
+      s.tipo_beca AS programa_beca,
+      s.tipo_beca AS becario_tipo,
+      s.turno_estudio,
+      s.modalidad_estudio,
+      s."tipoTarea",
+      s."dependencia",
+      s.idiomas,
+      s.ocupacion_actual,
+      s.trabajando,
+      s.nivel_academico,
+      s.nivel_academico AS "nivelAcademico",
+      s.estado_estudio,
+
+
+
       b.latitud,
       b.longitud,
       b.latitud_pais,
       b.longitud_pais,
       b.nombre_representante,
       b.parentesco,
-      b.pais_origen
+      b.pais_origen,
+      d.anexo_cedula,
+      d.anexo_constancia,
+      d.anexo_residencia,
+      d.anexo_foto,
+      d.contrato_convenio
     FROM becarios_unificados b
     LEFT JOIN (
       SELECT DISTINCT ON (id_becario)
-        id_becario, id_institucion, id_carrera, institucion_nombre, carrera_nombre, nivel_academico, anio_ingreso, semestre_actual
+        id_becario, id_institucion, id_carrera, institucion_nombre, carrera_nombre, nivel_academico, anio_ingreso, semestre_actual,
+        tipo_beca, turno_estudio, modalidad_estudio, "tipoTarea", "dependencia", idiomas, ocupacion_actual, trabajando, estado_estudio
       FROM estudios_becario
-      ORDER BY id_becario, "createdAt" DESC
+      ORDER BY id_becario, 
+               (CASE WHEN semestre_actual IS NOT NULL OR nivel_academico IS NOT NULL THEN 0 ELSE 1 END) ASC,
+               "createdAt" DESC
     ) s ON s.id_becario = b.id
+
+    LEFT JOIN (
+      SELECT id_becario,
+        MAX(CASE WHEN id_tipo_documento = 1 THEN ruta_archivo END) AS anexo_cedula,
+        MAX(CASE WHEN id_tipo_documento = 2 THEN ruta_archivo END) AS anexo_constancia,
+        MAX(CASE WHEN id_tipo_documento = 3 THEN ruta_archivo END) AS anexo_residencia,
+        MAX(CASE WHEN id_tipo_documento = 4 THEN ruta_archivo END) AS anexo_foto,
+        MAX(CASE WHEN id_tipo_documento = 7 THEN ruta_archivo END) AS contrato_convenio
+      FROM documentos_becario
+      GROUP BY id_becario
+    ) d ON d.id_becario = b.id
     LEFT JOIN tbl_estado e ON e.codigoestado = b.estado
     LEFT JOIN tbl_municipio m ON m.codigomunicipio = b.municipio
     LEFT JOIN tbl_parroquia p ON p.codigoparroquia = b.parroquia
+    LEFT JOIN tbl_uner u_cat ON u_cat.codigo = s.id_institucion
+    LEFT JOIN tbl_carreras c_cat ON c_cat.codigo = s.id_carrera
     WHERE b.id_tipo_becario = $1
+
     ${geoFilter}
     ORDER BY b.id_usuario_legacy NULLS LAST, b.id
+
   `;
 
   return sequelize.query(query, { bind: params, type: sequelize.QueryTypes.SELECT });
@@ -158,8 +204,11 @@ async function obtenerEgresados({ estado = '', municipio = '', parroquia = '' })
       b.cedula,
       b.correo,
       b.telefono_principal AS telefono_celular,
+      b.genero,
+      b.nacionalidad,
       b.fecha_nacimiento,
       b.es_militar,
+      b.comuna,
       b.pais_origen AS descripcion_becario,
       b.estado AS codigoestado,
       b.municipio AS codigomunicipio,
@@ -172,30 +221,63 @@ async function obtenerEgresados({ estado = '', municipio = '', parroquia = '' })
       b.direccion,
       s.fecha_egreso,
       s.tipo_beca,
+      s.tipo_beca AS programa_beca,
+      s.tipo_beca AS becario_tipo,
       s.estado_estudio AS titularidad,
       s.idiomas,
       s.ocupacion_actual,
-      COALESCE(s.institucion_nombre, CAST(s.id_institucion AS TEXT), '') AS universidad,
-      COALESCE(s.carrera_nombre, CAST(s.id_carrera AS TEXT), '') AS carrera_cursada,
-      s.trabajando
+      COALESCE(s.institucion_nombre, u_cat.nombre_uner, CAST(s.id_institucion AS TEXT), '') AS universidad,
+      COALESCE(s.institucion_nombre, u_cat.nombre_uner, CAST(s.id_institucion AS TEXT), '') AS institucion,
+      COALESCE(s.carrera_nombre, c_cat.carreras, CAST(s.id_carrera AS TEXT), '') AS carrera_cursada,
+      COALESCE(s.carrera_nombre, c_cat.carreras, CAST(s.id_carrera AS TEXT), '') AS programa_estudio,
+      s.trabajando,
+      s.nivel_academico,
+      s.nivel_academico AS "nivelAcademico",
+      s.semestre_actual,
+      s.semestre_actual AS "semestreActual",
+
+
+
+      d.anexo_cedula,
+      d.anexo_constancia,
+      d.anexo_residencia,
+      d.anexo_foto,
+      d.contrato_convenio
     FROM becarios_unificados b
     LEFT JOIN (
       SELECT DISTINCT ON (id_becario)
         id_becario, id_estatus, id_institucion, institucion_nombre, id_carrera, carrera_nombre,
-        fecha_egreso, tipo_beca, estado_estudio, idiomas, ocupacion_actual, trabajando
+        fecha_egreso, tipo_beca, estado_estudio, idiomas, ocupacion_actual, trabajando, nivel_academico, semestre_actual
       FROM estudios_becario
-      ORDER BY id_becario, "createdAt" DESC
+      ORDER BY id_becario, 
+               (CASE WHEN semestre_actual IS NOT NULL OR nivel_academico IS NOT NULL THEN 0 ELSE 1 END) ASC,
+               "createdAt" DESC
     ) s ON s.id_becario = b.id
+
+    LEFT JOIN (
+      SELECT id_becario,
+        MAX(CASE WHEN id_tipo_documento = 1 THEN ruta_archivo END) AS anexo_cedula,
+        MAX(CASE WHEN id_tipo_documento = 2 THEN ruta_archivo END) AS anexo_constancia,
+        MAX(CASE WHEN id_tipo_documento = 3 THEN ruta_archivo END) AS anexo_residencia,
+        MAX(CASE WHEN id_tipo_documento = 4 THEN ruta_archivo END) AS anexo_foto,
+        MAX(CASE WHEN id_tipo_documento = 7 THEN ruta_archivo END) AS contrato_convenio
+      FROM documentos_becario
+      GROUP BY id_becario
+    ) d ON d.id_becario = b.id
     LEFT JOIN tbl_estado e ON e.codigoestado = b.estado
     LEFT JOIN tbl_municipio m ON m.codigomunicipio = b.municipio
     LEFT JOIN tbl_parroquia p ON p.codigoparroquia = b.parroquia
+    LEFT JOIN tbl_uner u_cat ON u_cat.codigo = s.id_institucion
+    LEFT JOIN tbl_carreras c_cat ON c_cat.codigo = s.id_carrera
     WHERE s.id_estatus = 2
+
     ${geoFilter}
     ORDER BY b.id_usuario_legacy NULLS LAST, b.id
   `;
 
   return sequelize.query(query, { bind: params, type: sequelize.QueryTypes.SELECT });
 }
+
 
 async function obtenerDetalleBecario(id) {
   const query = `
@@ -221,14 +303,17 @@ async function obtenerDetalleBecario(id) {
       m.nombre AS municipio,
       p.nombre AS parroquia,
       b.codigoestado2,
-      COALESCE(s.institucion_nombre, CAST(s.id_institucion AS TEXT), '') AS institucion,
-      COALESCE(s.carrera_nombre, CAST(s.id_carrera AS TEXT), '') AS programa_estudio,
+      COALESCE(s.institucion_nombre, u_cat.nombre_uner, CAST(s.id_institucion AS TEXT), '') AS institucion,
+      COALESCE(s.carrera_nombre, c_cat.carreras, CAST(s.id_carrera AS TEXT), '') AS programa_estudio,
       s.anio_ingreso,
       s.semestre_actual,
-
+      s.semestre_actual AS "semestreActual",
+      s.nivel_academico,
+      s.nivel_academico AS "nivelAcademico",
       s.turno_estudio,
       s.modalidad_estudio,
       s.tipo_beca AS programa_beca,
+      s.tipo_beca AS becario_tipo,
       s."tipoTarea",
       s."dependencia",
       b.latitud,
@@ -245,17 +330,23 @@ async function obtenerDetalleBecario(id) {
         id_becario, id_institucion, institucion_nombre, id_carrera, carrera_nombre,
         anio_ingreso, semestre_actual, idiomas, ocupacion_actual, trabajando, turno_estudio, nivel_academico, estado_estudio, "tipoTarea", "dependencia", modalidad_estudio, tipo_beca
       FROM estudios_becario
-      ORDER BY id_becario, "createdAt" DESC
+      ORDER BY id_becario, 
+               (CASE WHEN semestre_actual IS NOT NULL OR nivel_academico IS NOT NULL THEN 0 ELSE 1 END) ASC,
+               "createdAt" DESC
     ) s ON s.id_becario = b.id
+
     LEFT JOIN documentos_becario d ON d.id_becario = b.id
     LEFT JOIN tbl_estado e ON e.codigoestado = b.estado
     LEFT JOIN tbl_municipio m ON m.codigomunicipio = b.municipio
     LEFT JOIN tbl_parroquia p ON p.codigoparroquia = b.parroquia
+    LEFT JOIN tbl_uner u_cat ON u_cat.codigo = s.id_institucion
+    LEFT JOIN tbl_carreras c_cat ON c_cat.codigo = s.id_carrera
     WHERE b.id_usuario_legacy = $1 AND b.id_tipo_becario = 1
     GROUP BY b.id, b.id_usuario_legacy, e.nombre, m.nombre, p.nombre,
-             s.id_institucion, s.institucion_nombre, s.id_carrera, s.carrera_nombre,
+             s.id_institucion, s.institucion_nombre, u_cat.nombre_uner, s.id_carrera, s.carrera_nombre, c_cat.carreras,
              s.anio_ingreso, s.semestre_actual, s.turno_estudio, s.modalidad_estudio, s.tipo_beca, s.nivel_academico, s.estado_estudio , s."tipoTarea", s."dependencia"
     LIMIT 1
+
   `;
 
   const rows = await sequelize.query(query, { bind: [id], type: sequelize.QueryTypes.SELECT });
@@ -731,7 +822,7 @@ async function registrarOActualizarEgresado(body, explicitId = null) {
     );
 
     await t.commit();
-    
+
     let detalle;
     try {
       detalle = await obtenerDetalleEgresado(becario.id);
@@ -739,7 +830,7 @@ async function registrarOActualizarEgresado(body, explicitId = null) {
       console.error('Error al obtener detalle después de commit:', queryError.message);
       throw queryError;
     }
-    
+
     return detalle;
   } catch (error) {
     // Solo hacer rollback si la transacción aún está activa

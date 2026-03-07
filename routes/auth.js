@@ -1,5 +1,8 @@
 const express = require('express');
 const { register, login, recupera_clave, getUsuarios, deleteUsuario, getRoles, updateUsuarioRol, register_admin } = require('../controllers/authController');
+
+const { getTiposRegistro, updateTipoRegistro } = require('../controllers/configController');
+
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { canView, canCreate, canEdit, canDelete } = require('../middleware/permissions');
 const router = express.Router();
@@ -8,20 +11,20 @@ const router = express.Router();
 const requireRoleOrAdmin = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user || !req.user.rol_codigo) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        message: 'Usuario no autenticado o sin rol asignado' 
+        message: 'Usuario no autenticado o sin rol asignado'
       });
     }
-    
+
     // Permitir administradores o roles específicos
     if (req.user.rol_codigo === 'ADMIN' || allowedRoles.includes(req.user.rol_codigo)) {
       return next();
     }
-    
-    return res.status(403).json({ 
+
+    return res.status(403).json({
       success: false,
-      message: 'No tienes permisos para esta acción' 
+      message: 'No tienes permisos para esta acción'
     });
   };
 };
@@ -39,5 +42,10 @@ router.post('/deleteUsuario', authenticateToken, requireAdmin, canDelete, delete
 
 // Admin user registration route
 router.post('/register_admin', authenticateToken, requireAdmin, canCreate, register_admin);
+
+// Tipos de Registro routes
+router.get('/tipos-registro', getTiposRegistro);
+router.put('/tipos-registro/:id', authenticateToken, requireAdmin, updateTipoRegistro);
+
 
 module.exports = router;
