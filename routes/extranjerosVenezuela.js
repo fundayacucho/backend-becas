@@ -1,13 +1,25 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const upload = require('../config/multerConfig');
 const {
   listarExtranjeros,
   detalleExtranjero,
   registrarExtranjero,
   actualizarExtranjero,
-  eliminarExtranjero
+  eliminarExtranjero,
+  exportarExtranjeros,
+  importarExtranjeros,
 } = require('../controllers/extranjerosVenezuelaController');
+
+const uploadMemory = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ok = /xlsx|xls|csv/.test(file.originalname.toLowerCase());
+    cb(ok ? null : new Error('Solo se permiten archivos xlsx, xls o csv'), ok);
+  }
+});
 
 const extranjerosUploadFields = [
   { name: 'anexoCedula', maxCount: 1 },
@@ -19,6 +31,8 @@ const extranjerosUploadFields = [
 ];
 
 router.get('/listar', listarExtranjeros);
+router.get('/exportar', exportarExtranjeros);
+router.post('/importar', uploadMemory.single('archivo'), importarExtranjeros);
 router.get('/detalle', detalleExtranjero);
 router.post('/registro', upload.fields(extranjerosUploadFields), registrarExtranjero);
 router.put('/actualizar/:id', upload.fields(extranjerosUploadFields), actualizarExtranjero);

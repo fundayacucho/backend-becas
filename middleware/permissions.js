@@ -17,15 +17,19 @@ const requirePermission = (requiredAction) => {
       }
 
       // Obtener los permisos del rol del usuario
-      const permisos = await PermisosRol.findOne({
+      let permisos = await PermisosRol.findOne({
         where: { rol_id: req.user.id_rol }
       });
 
-      // Si no se encuentran permisos para este rol, denegar acceso
+      // Si no hay fila configurada, crear defaults según nivel del rol
       if (!permisos) {
-        return res.status(403).json({ 
-          success: false,
-          message: 'No se encontraron permisos configurados para tu rol' 
+        const esRolAdmin = ['ADMIN', 'SUPERVISOR', 'ADMIN_EXT_VEN'].includes(req.user.rol_codigo);
+        permisos = await PermisosRol.create({
+          rol_id: req.user.id_rol,
+          ver:    true,
+          crear:  esRolAdmin,
+          editar: esRolAdmin,
+          borrar: esRolAdmin
         });
       }
 
@@ -66,14 +70,18 @@ const requirePermissions = (requiredActions, operator = 'AND') => {
         });
       }
 
-      const permisos = await PermisosRol.findOne({
+      let permisos = await PermisosRol.findOne({
         where: { rol_id: req.user.id_rol }
       });
 
       if (!permisos) {
-        return res.status(403).json({ 
-          success: false,
-          message: 'No se encontraron permisos configurados para tu rol' 
+        const esRolAdmin = ['ADMIN', 'SUPERVISOR', 'ADMIN_EXT_VEN'].includes(req.user.rol_codigo);
+        permisos = await PermisosRol.create({
+          rol_id: req.user.id_rol,
+          ver:    true,
+          crear:  esRolAdmin,
+          editar: esRolAdmin,
+          borrar: esRolAdmin
         });
       }
 

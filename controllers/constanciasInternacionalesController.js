@@ -1,7 +1,7 @@
 ﻿const constanciasService = require('../services/constanciasInternacionalesService');
 
-const ROLES_CONSTANCIA = ['ANALISTA', 'SUPERVISOR', 'ADMIN'];
-const ROLES_TEMPLATE_EDIT = ['SUPERVISOR', 'ADMIN'];
+const ROLES_CONSTANCIA = ['ANALISTA', 'SUPERVISOR', 'ADMIN', 'ADMIN_EXT_VEN'];
+const ROLES_TEMPLATE_EDIT = ['SUPERVISOR', 'ADMIN', 'ADMIN_EXT_VEN'];
 
 function hasRole(req, allowed = []) {
   return !!req.user?.rol_codigo && allowed.includes(req.user.rol_codigo);

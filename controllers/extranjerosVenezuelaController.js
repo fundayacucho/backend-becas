@@ -22,10 +22,7 @@ const parseIdFromQuery = (req) => {
 const listarExtranjeros = async (req, res, next) => {
   try {
     const data = await extranjerosService.listarExtranjeros(parseFilters(req));
-    if (!data || data.length === 0) {
-      return res.status(404).json({ message: 'No se encontraron becarios extranjeros' });
-    }
-    return res.json(data);
+    return res.json(data || []);
   } catch (error) {
     return next(error);
   }
@@ -90,10 +87,113 @@ const eliminarExtranjero = async (req, res, next) => {
   }
 };
 
+const XLSX = require('xlsx');
+
+const EXPORT_COLUMNS = [
+  { key: 'nombres_apellidos',           header: 'Nombre Completo' },
+  { key: 'cedula',                      header: 'Cedula' },
+  { key: 'pasaporte',                   header: 'Pasaporte' },
+  { key: 'correo',                      header: 'Correo' },
+  { key: 'telefono_principal',          header: 'Telefono' },
+  { key: 'pais_origen',                 header: 'Pais Origen' },
+  { key: 'estado',                      header: 'Estado' },
+  { key: 'municipio',                   header: 'Municipio' },
+  { key: 'parroquia',                   header: 'Parroquia' },
+  { key: 'institucion',                 header: 'Institucion' },
+  { key: 'programa_estudio',            header: 'Carrera' },
+  { key: 'anio_ingreso',                header: 'Anio Ingreso' },
+  { key: 'semestre_actual',             header: 'Semestre Actual' },
+  { key: 'estatus_academico',           header: 'Estatus Academico' },
+  { key: 'status_visa',                 header: 'Status Visa' },
+  { key: 'fecha_vencimiento_visa',      header: 'Fecha Vencimiento Visa' },
+  { key: 'estatus_pasaporte',           header: 'Estatus Pasaporte' },
+  { key: 'fecha_vencimiento_pasaporte', header: 'Fecha Vencimiento Pasaporte' },
+  { key: 'observaciones',              header: 'Observaciones' },
+];
+
+const IMPORT_MAP = {
+  'nombre completo':              'nombresApellidos',
+  'cedula':                       'cedula',
+  'pasaporte':                    'pasaporte',
+  'correo':                       'correo',
+  'telefono':                     'telefonoPrincipal',
+  'pais origen':                  'pais_origen',
+  'estado':                       'codigoestado',
+  'municipio':                    'codigomunicipio',
+  'parroquia':                    'codigoparroquia',
+  'institucion':                  'institucion',
+  'carrera':                      'programaEstudio',
+  'anio ingreso':                 'anioIngreso',
+  'semestre actual':              'semestreActual',
+  'estatus academico':            'estadoEstudio',
+  'status visa':                  'statusVisa',
+  'fecha vencimiento visa':       'fechaVencimientoVisa',
+  'estatus pasaporte':            'estatusPasaporte',
+  'fecha vencimiento pasaporte':  'fechaVencimientoPasaporte',
+  'observaciones':                'observaciones',
+};
+
+const exportarExtranjeros = async (req, res, next) => {
+  try {
+    const data = await extranjerosService.listarExtranjeros({});
+    const rows = (data || []).map(r =>
+      Object.fromEntries(EXPORT_COLUMNS.map(c => [c.header, r[c.key] ?? '']))
+    );
+    const ws = XLSX.utils.json_to_sheet(rows, { header: EXPORT_COLUMNS.map(c => c.header) });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Extranjeros');
+    const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="extranjeros_venezuela_${Date.now()}.xlsx"`);
+    return res.send(buf);
+  } catch (error) {
+    return next(error);
+  }
+};
+
+const importarExtranjeros = async (req, res, next) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'Archivo requerido' });
+
+    const wb = XLSX.read(req.file.buffer, { type: 'buffer', cellDates: true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rawRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+    if (!rawRows.length) return res.json({ total: 0, insertados: 0, actualizados: 0, errores: [] });
+
+    const results = { total: rawRows.length, insertados: 0, actualizados: 0, errores: [] };
+
+    for (let i = 0; i < rawRows.length; i++) {
+      const raw = rawRows[i];
+      const body = {};
+      for (const [col, field] of Object.entries(IMPORT_MAP)) {
+        const val = raw[Object.keys(raw).find(k => k.toLowerCase().trim() === col)] ?? '';
+        if (val !== '') body[field] = String(val).trim();
+      }
+      if (!body.nombresApellidos && !body.cedula && !body.pasaporte) {
+        results.errores.push({ fila: i + 2, error: 'Sin nombre, cédula ni pasaporte' });
+        continue;
+      }
+      try {
+        const r = await extranjerosService.registrarExtranjero(body, {});
+        if (r.isUpdate) results.actualizados++; else results.insertados++;
+      } catch (err) {
+        results.errores.push({ fila: i + 2, error: err.message || 'Error desconocido' });
+      }
+    }
+
+    return res.json(results);
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   listarExtranjeros,
   detalleExtranjero,
   registrarExtranjero,
   actualizarExtranjero,
-  eliminarExtranjero
+  eliminarExtranjero,
+  exportarExtranjeros,
+  importarExtranjeros,
 };

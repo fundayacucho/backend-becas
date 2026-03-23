@@ -75,4 +75,55 @@ const recupera_clave = async (req, res) => {
   }
 };
 
-module.exports = { recupera_clave };
+// Reset directo por admin: puede enviar correo con nueva clave o establecer clave manual
+const resetPasswordAdmin = async (req, res) => {
+  try {
+    const { email, nueva_clave } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email requerido' });
+
+    const user = await User.findByEmail(email);
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
+
+    const newPassword = nueva_clave?.trim() || Math.random().toString(36).slice(-10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await User.updatePassword(user.id, hashedPassword);
+
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="text-align: center;">
+          <img src="https://fundayacucho.gob.ve/img/c1.png" alt="Logo" width="100%" height="200">
+        </div>
+        <h2 style="color: #2c3e50;">Restablecimiento de contraseña</h2>
+        <p>Hola <strong>${user.email}</strong>,</p>
+        <p>Un administrador ha restablecido tu contraseña. Tu nueva contraseña es:</p>
+        <p style="font-size: 1.4em; font-weight: bold; color: #1565C0; letter-spacing: 2px;">${newPassword}</p>
+        <p>Por seguridad, te recomendamos cambiarla tras iniciar sesión.</p>
+        <hr>
+        <p style="color: #7f8c8d; font-size: 0.9em;">
+          Si no solicitaste este cambio, contacta a soporte inmediatamente.
+        </p>
+      </div>
+    `;
+
+    let correoEnviado = false;
+    try {
+      await sendEmail(user.email, 'Contraseña restablecida por administrador', emailHtml);
+      correoEnviado = true;
+    } catch (mailErr) {
+      console.warn('No se pudo enviar el correo:', mailErr.message);
+    }
+
+    res.status(200).json({
+      message: correoEnviado
+        ? 'Contraseña restablecida y correo enviado'
+        : 'Contraseña restablecida. No se pudo enviar el correo de notificación.',
+      email: user.email,
+      correo_enviado: correoEnviado,
+    });
+  } catch (error) {
+    console.error('Error en resetPasswordAdmin:', error);
+    res.status(500).json({ message: 'Error del servidor', error: error.message });
+  }
+};
+
+module.exports = { recupera_clave, resetPasswordAdmin };

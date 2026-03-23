@@ -13,7 +13,7 @@ const {
 
 const router = express.Router();
 
-router.use(authenticateToken, authorize('ANALISTA', 'SUPERVISOR', 'ADMIN'));
+router.use(authenticateToken, authorize('ANALISTA', 'SUPERVISOR', 'ADMIN', 'ADMIN_EXT_VEN'));
 
 router.get('/becarios-extranjeros', listExtranjeros);
 router.get('/becarios-extranjeros/:id', getDataFromBecario);

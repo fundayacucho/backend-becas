@@ -29,6 +29,11 @@ const requireRoleOrAdmin = (...allowedRoles) => {
   };
 };
 
+// Debug temporal: ver qué rol tiene el token actual
+router.get('/me', authenticateToken, (req, res) => {
+  res.json({ id: req.user.id, email: req.user.email, id_rol: req.user.id_rol, rol_codigo: req.user.rol_codigo });
+});
+
 // Public routes
 router.post('/register', register);
 router.post('/login', login);
@@ -36,12 +41,12 @@ router.post('/recupera_clave', recupera_clave);
 router.get('/roles', getRoles);
 
 // Protected routes with permissions
-router.get('/getUsuarios', authenticateToken, requireRoleOrAdmin('SUPERVISOR', 'ANALISTA'), canView, getUsuarios);
+router.get('/getUsuarios', authenticateToken, requireRoleOrAdmin('SUPERVISOR', 'ANALISTA', 'ADMIN_EXT_VEN'), canView, getUsuarios);
 router.put('/users/:id', authenticateToken, requireAdmin, canEdit, updateUsuarioRol);
 router.post('/deleteUsuario', authenticateToken, requireAdmin, canDelete, deleteUsuario);
 
-// Admin user registration route
-router.post('/register_admin', authenticateToken, requireAdmin, canCreate, register_admin);
+// Admin user registration route (ADMIN pleno + ADMIN_EXT_VEN con restricción de rol)
+router.post('/register_admin', authenticateToken, requireRoleOrAdmin('ADMIN_EXT_VEN'), canCreate, register_admin);
 
 // Tipos de Registro routes
 router.get('/tipos-registro', getTiposRegistro);

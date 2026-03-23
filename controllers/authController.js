@@ -7,6 +7,10 @@ const { Usuario, CatRoles } = require('../models');
 const getUsuarios = async (req, res) => {
   try {
     const users = await User.findAll();
+    // ADMIN_EXT_VEN solo ve sus propios usuarios
+    if (req.user?.rol_codigo === 'ADMIN_EXT_VEN') {
+      return res.json(users.filter(u => u.rol_codigo === 'ADMIN_EXT_VEN'));
+    }
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: 'Error del servidor', error: error.message });
@@ -189,9 +193,17 @@ const register_admin = async (req, res) => {
     // Verificar que el rol exista
     const rol = await CatRoles.findByPk(id_rol);
     if (!rol) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: 'El rol especificado no existe' 
+        message: 'El rol especificado no existe'
+      });
+    }
+
+    // ADMIN_EXT_VEN solo puede crear usuarios con su mismo rol
+    if (req.user?.rol_codigo === 'ADMIN_EXT_VEN' && rol.codigo !== 'ADMIN_EXT_VEN') {
+      return res.status(403).json({
+        success: false,
+        message: 'Solo puede crear usuarios con rol ADMIN_EXT_VEN'
       });
     }
 

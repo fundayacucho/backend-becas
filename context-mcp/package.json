@@ -1,0 +1,13 @@
+{
+  "name": "project-context-mcp",
+  "version": "1.0.0",
+  "description": "MCP server to share project context and task status with other IAs",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.6.0"
+  }
+}
