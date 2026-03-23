@@ -11,6 +11,8 @@ API Node.js + Express para gestion de becarios con base de datos PostgreSQL y Se
 - `npm run db:migrate` migra datos legacy a V2.
 - `npm run db:migrate:add-nacionalidad-usuarios` agrega `usuarios.nacionalidad` con default `V`.
 - `npm run db:import-extranjeros` importa CSV de extranjeros.
+  node scripts/setup-constancias-log.js
+
 
 ## Endpoints clave (legacy + nuevos)
 - Legacy:

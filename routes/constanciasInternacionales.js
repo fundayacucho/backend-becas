@@ -8,7 +8,8 @@ const {
   getTemplate,
   updateTemplate,
   previewConstancia,
-  generateConstancia
+  generateConstancia,
+  getConstanciasCount,
 } = require('../controllers/constanciasInternacionalesController');
 
 const router = express.Router();
@@ -22,5 +23,6 @@ router.get('/template', getTemplate);
 router.put('/template', updateTemplate);
 router.post('/preview', previewConstancia);
 router.post('/generate', generateConstancia);
+router.get('/count', getConstanciasCount);
 
 module.exports = router;

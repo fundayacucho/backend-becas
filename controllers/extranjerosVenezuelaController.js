@@ -119,8 +119,11 @@ const IMPORT_MAP = {
   'telefono':                     'telefonoPrincipal',
   'pais origen':                  'pais_origen',
   'estado':                       'codigoestado',
+  'estado (opcional)':            'codigoestado',
   'municipio':                    'codigomunicipio',
+  'municipio (opcional)':         'codigomunicipio',
   'parroquia':                    'codigoparroquia',
+  'parroquia (opcional)':         'codigoparroquia',
   'institucion':                  'institucion',
   'carrera':                      'programaEstudio',
   'anio ingreso':                 'anioIngreso',
@@ -153,6 +156,7 @@ const exportarExtranjeros = async (req, res, next) => {
 
 const importarExtranjeros = async (req, res, next) => {
   try {
+    console.log('[importar] file recibido:', req.file?.originalname, req.file?.size, 'bytes');
     if (!req.file) return res.status(400).json({ message: 'Archivo requerido' });
 
     const wb = XLSX.read(req.file.buffer, { type: 'buffer', cellDates: true });
@@ -170,10 +174,15 @@ const importarExtranjeros = async (req, res, next) => {
         const val = raw[Object.keys(raw).find(k => k.toLowerCase().trim() === col)] ?? '';
         if (val !== '') body[field] = String(val).trim();
       }
-      if (!body.nombresApellidos && !body.cedula && !body.pasaporte) {
-        results.errores.push({ fila: i + 2, error: 'Sin nombre, cédula ni pasaporte' });
+      if (!body.nombresApellidos) {
+        results.errores.push({ fila: i + 2, error: 'Nombre completo requerido' });
         continue;
       }
+      if (!body.cedula && !body.pasaporte) {
+        results.errores.push({ fila: i + 2, error: 'Se requiere cédula o pasaporte para identificar al becario' });
+        continue;
+      }
+      console.log(`[importar] fila ${i + 2}: cedula=${body.cedula} pasaporte=${body.pasaporte} nombre=${body.nombresApellidos}`);
       try {
         const r = await extranjerosService.registrarExtranjero(body, {});
         if (r.isUpdate) results.actualizados++; else results.insertados++;

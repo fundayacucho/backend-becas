@@ -1,4 +1,5 @@
 ﻿const constanciasService = require('../services/constanciasInternacionalesService');
+const { pool } = require('../config/database');
 
 const ROLES_CONSTANCIA = ['ANALISTA', 'SUPERVISOR', 'ADMIN', 'ADMIN_EXT_VEN'];
 const ROLES_TEMPLATE_EDIT = ['SUPERVISOR', 'ADMIN', 'ADMIN_EXT_VEN'];
@@ -105,6 +106,12 @@ const generateConstancia = async (req, res, next) => {
     if (format === 'pdf') {
       const pdfPayload = await constanciasService.generateConstanciaPdf(data, options);
 
+      // Registrar en log (no bloquea si falla)
+      pool.query(
+        'INSERT INTO constancias_log (id_becario, firmante, generado_por) VALUES ($1, $2, $3)',
+        [becarioId || null, data.firmante_nombre || null, req.user?.email || null]
+      ).catch(e => console.warn('[constancias_log]', e.message));
+
       if (req.query?.download === '1') {
         res.setHeader('Content-Type', pdfPayload.mimeType);
         res.setHeader('Content-Disposition', `attachment; filename="${pdfPayload.filename}"`);
@@ -132,6 +139,15 @@ const generateConstancia = async (req, res, next) => {
   }
 };
 
+const getConstanciasCount = async (req, res, next) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*) AS total FROM constancias_log');
+    return res.json({ total: parseInt(result.rows[0].total, 10) });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 module.exports = {
   listExtranjeros,
   getDataFromBecario,
@@ -139,5 +155,6 @@ module.exports = {
   getTemplate,
   updateTemplate,
   previewConstancia,
-  generateConstancia
+  generateConstancia,
+  getConstanciasCount,
 };

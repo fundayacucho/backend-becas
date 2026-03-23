@@ -14,6 +14,7 @@
     "db:migrate:add-missing-columns": "node scripts/migrate-add-missing-columns.js",
     "db:migrate:add-comuna": "node scripts/migrate-add-comuna.js",
     "db:import-extranjeros": "node scripts/import-extranjeros.js",
+    "db:constancias" : "node scripts/setup-constancias-log.js",
     "db:all": "npm run db:setup && npm run db:migrate && npm run db:import-extranjeros",
     "check:permissions": "node scripts/check-permissions.js",
     "db:setup-tipos-registro": "node scripts/setup-tipos-registro.js",
