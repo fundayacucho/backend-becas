@@ -1,7 +1,24 @@
-﻿const fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
+const QRCode = require('qrcode');
 const extranjerosService = require('./extranjerosService');
+
+async function generateQrBuffer(text) {
+  try {
+    return await QRCode.toBuffer(text, {
+      margin: 1,
+      width: 80,
+      color: {
+        dark: '#111111',
+        light: '#FFFFFF'
+      }
+    });
+  } catch (err) {
+    console.error('Error generando QR:', err);
+    return null;
+  }
+}
 
 const TEMPLATE_DIR = path.join(__dirname, '..', 'data', 'templates');
 const TEMPLATE_PATH = path.join(TEMPLATE_DIR, 'constancia_internacional.json');
@@ -159,7 +176,7 @@ function buildHtml(template, data = {}) {
 }
 
 
-function buildPdf(template, data = {}) {
+async function buildPdf(template, data = {}) {
   const doc = new PDFDocument({ size: 'A4', margin: 56 });
   const chunks = [];
   doc.on('data', (chunk) => chunks.push(chunk));
@@ -186,6 +203,23 @@ function buildPdf(template, data = {}) {
   });
   doc.moveDown(1.2).fontSize(12).text(replacePlaceholders(template.firma, data), { align: 'left', lineGap: 4 });
   doc.moveDown(1.2).fontSize(10).fillColor('#444444').text(replacePlaceholders(template.pie, data), { align: 'left' });
+
+  // QR de validación en la esquina inferior derecha (al final para no interferir con el flujo)
+  try {
+    const baseUrl = process.env.BASE_URL ? `https://${process.env.BASE_URL}` : 'https://becarios.fundayacucho.gob.ve';
+    const validationUrl = `${baseUrl}/#/validar/${data.numero_constancia || 'no-id'}`;
+    const qrBuffer = await generateQrBuffer(validationUrl);
+
+    if (qrBuffer) {
+      // Posicionamiento absoluto para no mover el cursor de texto
+      // Subido a y=680 para alejarse más del borde inferior
+      doc.image(qrBuffer, 460, 680, { width: 75 });
+      doc.fontSize(6).fillColor('#999999').text('VALIDACIÓN QR', 460, 755, { width: 75, align: 'center' });
+    }
+  } catch (err) {
+    console.error('Error insertando QR en PDF:', err);
+  }
+
   doc.end();
 
   return new Promise((resolve, reject) => {

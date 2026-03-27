@@ -42,15 +42,15 @@ router.get('/roles', getRoles);
 
 // Protected routes with permissions
 router.get('/getUsuarios', authenticateToken, requireRoleOrAdmin('SUPERVISOR', 'ANALISTA', 'ADMIN_EXT_VEN'), canView, getUsuarios);
-router.put('/users/:id', authenticateToken, requireAdmin, canEdit, updateUsuarioRol);
-router.post('/deleteUsuario', authenticateToken, requireAdmin, canDelete, deleteUsuario);
+router.put('/users/:id', authenticateToken, requireRoleOrAdmin('SUPERVISOR', 'ANALISTA', 'ADMIN_EXT_VEN'), canEdit, updateUsuarioRol);
+router.post('/deleteUsuario', authenticateToken, requireRoleOrAdmin('SUPERVISOR', 'ANALISTA', 'ADMIN_EXT_VEN'), canDelete, deleteUsuario);
 
 // Admin user registration route (ADMIN pleno + ADMIN_EXT_VEN con restricción de rol)
-router.post('/register_admin', authenticateToken, requireRoleOrAdmin('ADMIN_EXT_VEN'), canCreate, register_admin);
+router.post('/register_admin', authenticateToken, requireRoleOrAdmin('ADMIN_EXT_VEN', 'ANALISTA'), canCreate, register_admin);
 
 // Tipos de Registro routes
 router.get('/tipos-registro', getTiposRegistro);
-router.put('/tipos-registro/:id', authenticateToken, requireAdmin, updateTipoRegistro);
+router.put('/tipos-registro/:id', authenticateToken, requireRoleOrAdmin('SUPERVISOR', 'ADMIN_EXT_VEN'), updateTipoRegistro);
 
 
 module.exports = router;

@@ -23,7 +23,7 @@ const requirePermission = (requiredAction) => {
 
       // Si no hay fila configurada, crear defaults según nivel del rol
       if (!permisos) {
-        const esRolAdmin = ['ADMIN', 'SUPERVISOR', 'ADMIN_EXT_VEN'].includes(req.user.rol_codigo);
+        const esRolAdmin = ['ADMIN', 'SUPERVISOR', 'ADMIN_EXT_VEN', 'ANALISTA'].includes(req.user.rol_codigo);
         permisos = await PermisosRol.create({
           rol_id: req.user.id_rol,
           ver:    true,

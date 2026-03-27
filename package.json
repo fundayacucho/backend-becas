@@ -14,7 +14,7 @@
     "db:migrate:add-missing-columns": "node scripts/migrate-add-missing-columns.js",
     "db:migrate:add-comuna": "node scripts/migrate-add-comuna.js",
     "db:import-extranjeros": "node scripts/import-extranjeros.js",
-    "db:constancias" : "node scripts/setup-constancias-log.js",
+    "db:constancias": "node scripts/setup-constancias-log.js",
     "db:all": "npm run db:setup && npm run db:migrate && npm run db:import-extranjeros",
     "check:permissions": "node scripts/check-permissions.js",
     "db:setup-tipos-registro": "node scripts/setup-tipos-registro.js",
@@ -36,6 +36,7 @@
     "nodemailer": "^7.0.10",
     "pdfkit": "^0.17.2",
     "pg": "^8.19.0",
+    "qrcode": "^1.5.4",
     "sequelize": "^6.37.7",
     "xlsx": "^0.18.5"
   },

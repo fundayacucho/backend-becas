@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const upload = require('../config/multerConfig');
+const { authenticateToken } = require('../middleware/auth');
+const { canView, canCreate, canEdit, canDelete } = require('../middleware/permissions');
 const {
   listarExtranjeros,
   detalleExtranjero,
@@ -11,6 +13,9 @@ const {
   exportarExtranjeros,
   importarExtranjeros,
 } = require('../controllers/extranjerosVenezuelaController');
+
+// Aplicar autenticación a todas las rutas
+router.use(authenticateToken);
 
 const uploadMemory = multer({
   storage: multer.memoryStorage(),
@@ -30,12 +35,12 @@ const extranjerosUploadFields = [
   { name: 'Contrato_convenio', maxCount: 1 }
 ];
 
-router.get('/listar', listarExtranjeros);
-router.get('/exportar', exportarExtranjeros);
-router.post('/importar', uploadMemory.single('archivo'), importarExtranjeros);
-router.get('/detalle', detalleExtranjero);
-router.post('/registro', upload.fields(extranjerosUploadFields), registrarExtranjero);
-router.put('/actualizar/:id', upload.fields(extranjerosUploadFields), actualizarExtranjero);
-router.delete('/eliminar/:id', eliminarExtranjero);
+router.get('/listar', canView, listarExtranjeros);
+router.get('/exportar', canView, exportarExtranjeros);
+router.post('/importar', canCreate, uploadMemory.single('archivo'), importarExtranjeros);
+router.get('/detalle', canView, detalleExtranjero);
+router.post('/registro', canCreate, upload.fields(extranjerosUploadFields), registrarExtranjero);
+router.put('/actualizar/:id', canEdit, upload.fields(extranjerosUploadFields), actualizarExtranjero);
+router.delete('/eliminar/:id', canDelete, eliminarExtranjero);
 
 module.exports = router;
